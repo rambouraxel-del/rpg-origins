@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { createHeroAnimations, preloadHero } from '../entities/Player';
-import { START_AREA } from '../world/areas';
+import { AREAS, START_AREA } from '../world/areas';
 
 /** Charge les ressources graphiques puis lance le monde. */
 export class BootScene extends Phaser.Scene {
@@ -10,6 +10,9 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     preloadHero(this);
+    for (const area of Object.values(AREAS)) {
+      if (area.background) this.load.image(`bg-${area.background}`, `assets/areas/${area.background}.png`);
+    }
   }
 
   create(): void {

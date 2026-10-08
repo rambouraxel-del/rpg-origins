@@ -4,21 +4,23 @@ export const sanctuary: AreaConfig = {
   id: 'sanctuary',
   name: 'Sanctuaire',
   backgroundColor: 0x3a3550,
+  background: 'sanctuary',
+  // Zones praticables (pieds du personnage), repérées sur l'image.
+  walkable: [
+    { x: 445, y: 455, width: 75, height: 85 },
+    { x: 420, y: 395, width: 125, height: 60 },
+    { x: 400, y: 300, width: 160, height: 100 },
+    { x: 120, y: 345, width: 280, height: 50 },
+    { x: 620, y: 350, width: 170, height: 50 },
+    { x: 240, y: 305, width: 160, height: 40 },
+    { x: 560, y: 305, width: 160, height: 40 },
+    { x: 440, y: 205, width: 80, height: 95 },
+  ],
   spawns: {
     default: { x: 480, y: 400 },
-    fromClearing: { x: 480, y: 470 },
+    fromClearing: { x: 482, y: 515 },
   },
-  exits: [{ edge: 'bottom', from: 420, to: 540, target: 'clearing', targetSpawn: 'fromSanctuary' }],
-  decor: [
-    // Dallage
-    { x: 320, y: 120, width: 320, height: 420, color: 0x5c5670, layer: 'ground' },
-    // Autel (solide)
-    { x: 440, y: 140, width: 80, height: 48, color: 0xb8b0d0, layer: 'decor', solid: true },
-    // Piliers : base solide + haut au premier plan
-    { x: 340, y: 240, width: 28, height: 40, color: 0x8c86a6, layer: 'decor', solid: true },
-    { x: 340, y: 192, width: 28, height: 48, color: 0x8c86a6, layer: 'foreground' },
-    { x: 592, y: 240, width: 28, height: 40, color: 0x8c86a6, layer: 'decor', solid: true },
-    { x: 592, y: 192, width: 28, height: 48, color: 0x8c86a6, layer: 'foreground' },
+  exits: [
+    { edge: 'bottom', from: 445, to: 520, target: 'clearing', targetSpawn: 'fromSanctuary' },
   ],
-  effects: [{ kind: 'mist' }], // pas encore rendu, exemple de configuration future
 };

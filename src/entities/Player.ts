@@ -5,7 +5,7 @@ import type { InputController } from '../systems/InputController';
 /** Chaque animation = une bande PNG de 8 images 92x92 (générée depuis assets-src/hero/*.gif). */
 const HERO_FRAME = 92;
 const HERO_SHEETS = [
-  'idle-down',
+  'idle-dirs', // 4 poses à l'arrêt : bas, droite, haut, gauche
   'walk-down',
   'walk-up',
   'walk-right',
@@ -15,6 +15,11 @@ const HERO_SHEETS = [
 ] as const;
 
 type Facing = 'down' | 'up' | 'left' | 'right';
+
+const IDLE_FRAME: Record<Facing, number> = { down: 0, right: 1, up: 2, left: 3 };
+
+/** Distance entre le centre du sprite et le centre de ses pieds (hitbox). */
+export const FEET_OFFSET_Y = 27;
 
 export function preloadHero(scene: Phaser.Scene): void {
   for (const key of HERO_SHEETS) {
@@ -33,7 +38,6 @@ export function createHeroAnimations(scene: Phaser.Scene): void {
       frameRate,
       repeat: -1,
     });
-  add('hero-idle-down', 'idle-down', 5);
   add('hero-walk-down', 'walk-down', 10);
   add('hero-walk-up', 'walk-up', 10);
   add('hero-walk-right', 'walk-right', 10); // gauche = même animation retournée
@@ -47,14 +51,13 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private facing: Facing = 'down';
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
-    super(scene, x, y, 'hero-idle-down');
+    super(scene, x, y, 'hero-idle-dirs', IDLE_FRAME.down);
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.setDepth(DEPTH.entities);
     this.setCollideWorldBounds(true);
     // Hitbox limitée aux pieds (bas du sprite) : le haut du corps peut passer derrière le décor.
     this.body!.setSize(22, 10).setOffset(35, 68);
-    this.play('hero-idle-down');
   }
 
   updateMovement(input: InputController): void {
@@ -80,15 +83,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private showIdle(): void {
-    if (this.facing === 'down') {
-      this.setFlipX(false).play('hero-idle-down', true);
-      return;
-    }
-    // Pas d'animation d'attente pour ces directions : on fige la 1re image de marche.
-    const anim = this.facing === 'up' ? 'hero-walk-up' : 'hero-walk-right';
-    this.setFlipX(this.facing === 'left');
-    if (this.anims.currentAnim?.key !== anim || this.anims.isPlaying) {
-      this.play(anim).anims.pause(this.anims.currentAnim!.frames[0]);
-    }
+    this.anims.stop();
+    this.setFlipX(false).setTexture('hero-idle-dirs', IDLE_FRAME[this.facing]);
   }
 }

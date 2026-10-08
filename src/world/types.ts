@@ -47,10 +47,20 @@ export interface AreaConfig {
   id: AreaId;
   name: string;
   backgroundColor: number;
-  /** Points d'apparition nommés. 'default' est utilisé au lancement. */
+  /** Image de fond 960x540 (fichier dans public/assets/areas/). */
+  background?: string;
+  /**
+   * Zones où les PIEDS du personnage peuvent aller. Tout le reste est bloqué (arbres, eau, murs...).
+   * Si absent, toute la zone est praticable.
+   */
+  walkable?: Rect[];
+  /** Points d'apparition nommés (position des PIEDS). 'default' est utilisé au lancement. */
   spawns: Record<string, { x: number; y: number }>;
   exits: Exit[];
-  decor: DecorElement[];
+  /** Décor provisoire en formes colorées (optionnel, non utilisé quand une image de fond existe). */
+  decor?: DecorElement[];
+  /** Éléments de premier plan : images passant devant le personnage (non utilisé pour l'instant). */
+  foreground?: { image: string; x: number; y: number }[];
   /** Murs invisibles supplémentaires. */
   colliders?: Rect[];
   interactables?: InteractableConfig[];

@@ -7,10 +7,12 @@ src, out = Path('assets-src/hero'), Path('public/assets/hero')
 out.mkdir(parents=True, exist_ok=True)
 for gif in sorted(src.glob('*.gif')):
     im = Image.open(gif)
-    w, h, n = im.width, im.height, im.n_frames
+    n = im.n_frames
+    w = h = 92  # taille de case commune ; les GIF plus petits sont centrés, pieds alignés (y=78)
     strip = Image.new('RGBA', (w * n, h), (0, 0, 0, 0))
     for i in range(n):
         im.seek(i)
-        strip.paste(im.convert('RGBA'), (i * w, 0))
+        f = im.convert('RGBA')
+        strip.paste(f, (i * w + (w - f.width) // 2, 78 - f.height if f.height < h else 0))
     strip.save(out / f'{gif.stem}.png', optimize=True)
-    print(f'{gif.stem}: {n} frames de {w}x{h}')
+    print(f'{gif.stem}: {n} frames')

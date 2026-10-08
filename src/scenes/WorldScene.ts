@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { DEPTH, GAME_HEIGHT, GAME_WIDTH } from '../config';
-import { Player } from '../entities/Player';
+import { FEET_OFFSET_Y, Player } from '../entities/Player';
 import { InputController } from '../systems/InputController';
 import { AREAS } from '../world/areas';
 import type { AreaConfig, AreaId, Exit, Rect } from '../world/types';
@@ -11,6 +11,7 @@ interface WorldData {
 }
 
 const EXIT_THICKNESS = 6;
+const CELL = 8; // finesse de la grille de collision générée depuis les zones praticables
 
 /**
  * Scène générique : affiche n'importe quelle zone à partir de sa configuration.
@@ -40,12 +41,14 @@ export class WorldScene extends Phaser.Scene {
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
     this.solids = this.physics.add.staticGroup();
+    this.buildBackground();
     this.buildDecor();
+    this.buildWalkableLimits();
     for (const c of area.colliders ?? []) this.addSolid(c);
 
     const spawn = area.spawns[this.spawnName] ?? area.spawns.default;
     this.controls = new InputController(this);
-    this.player = new Player(this, spawn.x, spawn.y);
+    this.player = new Player(this, spawn.x, spawn.y - FEET_OFFSET_Y);
     this.physics.add.collider(this.player, this.solids);
 
     this.buildExits();
@@ -56,6 +59,7 @@ export class WorldScene extends Phaser.Scene {
       .setDepth(DEPTH.ui)
       .setResolution(2);
 
+    if (new URLSearchParams(location.search).has('debug')) this.drawDebug();
     this.cameras.main.fadeIn(200, 0, 0, 0);
   }
 
@@ -64,8 +68,38 @@ export class WorldScene extends Phaser.Scene {
     this.player.updateMovement(this.controls);
   }
 
+  private buildBackground(): void {
+    if (!this.area.background) return;
+    this.add.image(0, 0, `bg-${this.area.background}`).setOrigin(0).setDepth(DEPTH.ground);
+  }
+
+  /** Tout ce qui n'est pas dans une zone praticable devient un obstacle (cellules fusionnées par lignes). */
+  private buildWalkableLimits(): void {
+    const walkable = this.area.walkable;
+    if (!walkable) return;
+    const inside = (x: number, y: number) =>
+      walkable.some((r) => x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height);
+    for (let cy = 0; cy < GAME_HEIGHT; cy += CELL) {
+      let runStart = -1;
+      for (let cx = 0; cx <= GAME_WIDTH; cx += CELL) {
+        const blocked = cx < GAME_WIDTH && !inside(cx + CELL / 2, cy + CELL / 2);
+        if (blocked && runStart < 0) runStart = cx;
+        if (!blocked && runStart >= 0) {
+          this.addSolid({ x: runStart, y: cy, width: cx - runStart, height: CELL });
+          runStart = -1;
+        }
+      }
+    }
+  }
+
+  private drawDebug(): void {
+    this.physics.world.createDebugGraphic();
+    this.physics.world.drawDebug = true;
+    this.physics.world.debugGraphic.setDepth(DEPTH.ui);
+  }
+
   private buildDecor(): void {
-    for (const d of this.area.decor) {
+    for (const d of this.area.decor ?? []) {
       this.add
         .rectangle(d.x, d.y, d.width, d.height, d.color)
         .setOrigin(0)
