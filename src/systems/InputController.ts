@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 
 const { KeyCodes } = Phaser.Input.Keyboard;
 
-// Plusieurs touches par direction : ZQSD (AZERTY), WASD (QWERTY) et flèches.
+// Plusieurs touches par direction : ZQSD (AZERTY), WASD (QWERTY) et flèches. Maj = courir.
 const BINDINGS = {
   up: [KeyCodes.Z, KeyCodes.W, KeyCodes.UP],
   down: [KeyCodes.S, KeyCodes.DOWN],
@@ -14,6 +14,7 @@ type Direction = keyof typeof BINDINGS;
 
 export class InputController {
   private keys: Record<Direction, Phaser.Input.Keyboard.Key[]>;
+  private runKey: Phaser.Input.Keyboard.Key;
 
   constructor(scene: Phaser.Scene) {
     const keyboard = scene.input.keyboard!;
@@ -24,6 +25,11 @@ export class InputController {
       left: make(BINDINGS.left),
       right: make(BINDINGS.right),
     };
+    this.runKey = keyboard.addKey(KeyCodes.SHIFT);
+  }
+
+  isRunning(): boolean {
+    return this.runKey.isDown;
   }
 
   private isDown(dir: Direction): boolean {

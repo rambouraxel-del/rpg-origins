@@ -10,7 +10,7 @@ interface WorldData {
   spawn: string;
 }
 
-const EXIT_THICKNESS = 4;
+const EXIT_THICKNESS = 6;
 
 /**
  * Scène générique : affiche n'importe quelle zone à partir de sa configuration.
@@ -52,9 +52,9 @@ export class WorldScene extends Phaser.Scene {
     // Points d'extension prévus : objets interactifs (area.interactables) et effets (area.effects).
 
     this.add
-      .text(4, 4, area.name, { fontFamily: 'monospace', fontSize: '10px', color: '#ffffff' })
+      .text(8, 8, area.name, { fontFamily: 'monospace', fontSize: '16px', color: '#ffffff' })
       .setDepth(DEPTH.ui)
-      .setResolution(4);
+      .setResolution(2);
 
     this.cameras.main.fadeIn(200, 0, 0, 0);
   }

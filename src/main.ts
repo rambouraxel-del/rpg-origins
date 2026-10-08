@@ -3,7 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from './config';
 import { BootScene } from './scenes/BootScene';
 import { WorldScene } from './scenes/WorldScene';
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: 'game',
   width: GAME_WIDTH,
@@ -20,3 +20,6 @@ new Phaser.Game({
   },
   scene: [BootScene, WorldScene],
 });
+
+// Accès de débogage (tests automatisés), uniquement en développement.
+if (import.meta.env.DEV) (window as unknown as { game: Phaser.Game }).game = game;

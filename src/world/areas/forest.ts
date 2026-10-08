@@ -5,22 +5,22 @@ export const forest: AreaConfig = {
   name: 'Forêt',
   backgroundColor: 0x1f4d2b,
   spawns: {
-    default: { x: 120, y: 140 },
-    fromClearing: { x: 440, y: 135 },
+    default: { x: 240, y: 280 },
+    fromClearing: { x: 880, y: 270 },
   },
-  exits: [{ edge: 'right', from: 105, to: 165, target: 'clearing', targetSpawn: 'fromForest' }],
+  exits: [{ edge: 'right', from: 210, to: 330, target: 'clearing', targetSpawn: 'fromForest' }],
   decor: [
     // Chemin vers la sortie est
-    { x: 100, y: 115, width: 380, height: 40, color: 0x6b5a3a, layer: 'ground' },
+    { x: 200, y: 230, width: 760, height: 80, color: 0x6b5a3a, layer: 'ground' },
     // Troncs (solides)
-    { x: 70, y: 40, width: 16, height: 24, color: 0x4a3020, layer: 'decor', solid: true },
-    { x: 200, y: 60, width: 16, height: 24, color: 0x4a3020, layer: 'decor', solid: true },
-    { x: 320, y: 190, width: 16, height: 24, color: 0x4a3020, layer: 'decor', solid: true },
-    { x: 150, y: 200, width: 16, height: 24, color: 0x4a3020, layer: 'decor', solid: true },
+    { x: 140, y: 80, width: 32, height: 48, color: 0x4a3020, layer: 'decor', solid: true },
+    { x: 400, y: 120, width: 32, height: 48, color: 0x4a3020, layer: 'decor', solid: true },
+    { x: 640, y: 380, width: 32, height: 48, color: 0x4a3020, layer: 'decor', solid: true },
+    { x: 300, y: 400, width: 32, height: 48, color: 0x4a3020, layer: 'decor', solid: true },
     // Feuillages au premier plan (le joueur passe dessous)
-    { x: 54, y: 8, width: 48, height: 36, color: 0x2f7a3e, layer: 'foreground' },
-    { x: 184, y: 28, width: 48, height: 36, color: 0x2f7a3e, layer: 'foreground' },
-    { x: 304, y: 158, width: 48, height: 36, color: 0x2f7a3e, layer: 'foreground' },
-    { x: 134, y: 168, width: 48, height: 36, color: 0x2f7a3e, layer: 'foreground' },
+    { x: 108, y: 16, width: 96, height: 72, color: 0x2f7a3e, layer: 'foreground' },
+    { x: 368, y: 56, width: 96, height: 72, color: 0x2f7a3e, layer: 'foreground' },
+    { x: 608, y: 316, width: 96, height: 72, color: 0x2f7a3e, layer: 'foreground' },
+    { x: 268, y: 336, width: 96, height: 72, color: 0x2f7a3e, layer: 'foreground' },
   ],
 };
