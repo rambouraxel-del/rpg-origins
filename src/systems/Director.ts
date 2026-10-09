@@ -1,7 +1,7 @@
 // Exécute les scènes principales et les étapes de quêtes à partir des données. Les effets sont appliqués une seule fois.
 import { hub } from '../game';
 import { applyEffects, completeScene, evalCond, flag } from '../core/state';
-import type { ActorPlacement, Choice, Effect, QuestScript, QuestStage, SceneDef, Step } from '../core/types';
+import type { ActorPlacement, Choice, CompanionId, Effect, QuestScript, QuestStage, SceneDef, Step } from '../core/types';
 import type { WorldScene } from '../scenes/WorldScene';
 import { Actor } from './Actor';
 import { saveTo } from './Saves';
@@ -20,6 +20,32 @@ export class Director {
 
   get pending(): string | null { return (hub.state.flags._pending as string | null) ?? null; }
   set pending(v: string | null) { hub.state.flags._pending = v; }
+
+  /** Raccourci de développement (?jump=ID) : applique les conséquences de toutes les scènes précédentes (ordre canonique), puis place le héros au début de la scène voulue. */
+  async jumpTo(id: string, order: string[]): Promise<void> {
+    const s = hub.state;
+    const upto = order.indexOf(id);
+    const collect = (steps: Step[]): Effect[] => steps.flatMap((st) => {
+      if (st.t === 'if') return collect(st.then);
+      const e = (st as { effects?: Effect[] }).effects ?? [];
+      return st.t === 'set' ? st.effects : e;
+    });
+    for (const sid of order.slice(0, Math.max(0, upto))) {
+      const def = hub.scenes.get(sid);
+      if (!def || (sid === 'C10S05')) continue;
+      applyEffects(s, collect(def.steps).filter((e) => e.op !== 'save'), `jump:${sid}`);
+      applyEffects(s, (def.onComplete ?? []).filter((e) => e.op !== 'save'), `scene:${sid}`);
+      completeScene(s, sid);
+    }
+    const target = hub.scenes.get(id);
+    if (!target) return;
+    this.pending = id;
+    s.currentScene = null;
+    const sp = hub.locations.get(target.loc)!.spawns[target.spawn ?? 'default'] ?? hub.locations.get(target.loc)!.spawns.default;
+    s.location = { loc: target.loc, x: sp.x, y: sp.y };
+    s.party = (target.party ?? s.party) as CompanionId[];
+    this.refreshQuests();
+  }
 
   /** Interrompt toute scène en cours (chargement d'une partie, retour au titre). */
   abort(): void {
@@ -186,6 +212,7 @@ export class Director {
   async runStep(step: Step, once: string, sceneId: string): Promise<{ suspend?: { back: number; at: string; label: string; text: string } } | void> {
     const w = this.world, ui = hub.ui, s = hub.state;
     this.curStep = step;
+    if (hub.devMode) console.info(`[dir] ${sceneId} ${once} ${step.t}`);
     switch (step.t) {
       case 'say': {
         await ui.say(step.lines);
@@ -219,8 +246,13 @@ export class Director {
         ui.objective(step.text);
         const done = new Promise<void>((resolve) => {
           w.onTalk(step.npc, async () => {
-            await ui.say(step.lines);
-            if (step.choices) await this.runChoices(step.choicePrompt, step.choices, once);
+            try {
+              await ui.say(step.lines);
+              if (step.choices) await this.runChoices(step.choicePrompt, step.choices, once);
+            } catch (e) {
+              console.error(`Erreur dans la conversation ${sceneId}/${step.npc}`, e);
+              throw e;
+            }
             w.clearTalk(step.npc);
             resolve();
           });

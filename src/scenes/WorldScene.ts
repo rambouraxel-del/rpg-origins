@@ -73,11 +73,13 @@ export class WorldScene extends Phaser.Scene {
   async loadLocation(locId: string, spawn?: string | Pt, face?: Facing): Promise<void> {
     const def = hub.locations.get(locId);
     if (!def) throw new Error(`Lieu inconnu : ${locId}`);
+    await this.ensureBackground(def);
+    // Le lieu courant ne change qu'une fois le fond prêt, et les points d'intérêt de l'ancien lieu sont retirés au même instant.
+    this.clearLocation();
     this.loc = def;
+    this.questHotspots = [];
     hub.state.location.loc = locId;
     applyEffects(hub.state, [{ op: 'discover', loc: locId }]);
-    await this.ensureBackground(def);
-    this.clearLocation();
     this.buildBackground(def);
     const sp: Pt & { face?: Facing } = typeof spawn === 'object' ? spawn : def.spawns[spawn ?? 'default'] ?? def.spawns.default ?? { x: 480, y: 400 };
     this.player.setPos(sp.x, sp.y);
@@ -336,7 +338,8 @@ export class WorldScene extends Phaser.Scene {
       consider({ kind: 'actor', id, x: a.x, y: a.y, label: `${a.verb ?? 'Parler à'} ${a.title ?? nameOf(id)}`.replace(/^Guider (.*)$/, 'Guider : $1'), dist: Math.hypot(a.x - px, a.y - py) });
     }
     for (const [id, a] of this.followers) {
-      consider({ kind: 'follower', id, x: a.x, y: a.y, label: `Parler à ${nameOf(id)}`, dist: Math.hypot(a.x - px, a.y - py) + 8 });
+      // Un compagnon attendu par l'histoire (conversation de scène) passe avant les autres, même s'ils sont groupés.
+      consider({ kind: 'follower', id, x: a.x, y: a.y, label: `Parler à ${nameOf(id)}`, dist: Math.hypot(a.x - px, a.y - py) + (this.talkHandlers.has(id) ? -40 : 8) });
     }
     for (const h of this.allHotspots()) {
       const r = this.hotRect(h);
@@ -368,6 +371,9 @@ export class WorldScene extends Phaser.Scene {
       else if (t.kind === 'follower') { const fn = this.talkHandlers.get(t.id); this.setTarget(null); if (fn) await fn(); else await this.banter(t.id as CompanionId); }
       else if (t.kind === 'rest') await hub.ui.restMenu();
       else if (t.kind === 'hotspot') await this.examine(t.id);
+    } catch (e) {
+      console.error('Erreur pendant une interaction', e);
+      throw e;
     } finally { hub.unlock(); }
   }
 
@@ -420,10 +426,13 @@ export class WorldScene extends Phaser.Scene {
     audio.whoosh();
     hub.ui.prompt(null);
     await hub.ui.fade(true, 260);
-    await this.loadLocation(locId, spawn, face);
-    this.director.afterLocationLoad();
-    await hub.ui.fade(false, 260);
-    this.transitioning = false;
+    try {
+      await this.loadLocation(locId, spawn, face);
+      this.director.afterLocationLoad();
+    } finally {
+      await hub.ui.fade(false, 260);
+      this.transitioning = false;
+    }
     await this.director.onEnterLocation(locId);
   }
 

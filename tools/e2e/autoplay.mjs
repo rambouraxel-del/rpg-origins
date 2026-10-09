@@ -11,7 +11,8 @@ const withQuests = process.argv.includes('--quests');
 const shotsDir = (process.argv.find((a) => a.startsWith('--shots=')) ?? '').split('=')[1];
 if (shotsDir) mkdirSync(shotsDir, { recursive: true });
 const t0 = Date.now();
-const { browser, page, logs } = await launch({ url: 'http://127.0.0.1:4173/?dev=1' });
+const jump = (process.argv.find((a) => a.startsWith('--jump=')) ?? '').split('=')[1];
+const { browser, page, logs } = await launch({ url: `http://127.0.0.1:4173/?dev=1${jump ? '&jump=' + jump : ''}` });
 page.setDefaultTimeout(8000);
 await sleep(800);
 
@@ -57,8 +58,9 @@ await page.evaluate(() => {
   ap.stepInfo = () => { const d = W().director; return { t: d.curStep?.t, scene: H.state.currentScene, idx: H.state.stepIndex, running: d.running, quest: d.questRunning, pending: d.pending, loc: W().loc?.id }; };
 });
 
-await page.evaluate(() => window.__hub.events.emit('title-choice', 'new'));
-await sleep(2500);
+if (!jump) await page.evaluate(() => window.__hub.events.emit('title-choice', 'new'));
+await sleep(jump ? 4500 : 2500);
+let progressAt = Date.now(), progressSig = '';
 const log = [];
 const L = (m) => { const line = `[${((Date.now() - t0) / 1000).toFixed(1)}s] ${m}`; log.push(line); appendFileSync('/tmp/autoplay-live.log', line + '\n'); };
 const done = new Set();
@@ -88,6 +90,10 @@ for (ticks = 0; ticks < MAX; ticks++) {
   appendFileSync('/tmp/autoplay-ticks.log', `${ticks} ${info.step.scene}#${info.step.idx}:${info.step.t} lk=${info.st.locked} dlg=${info.ui?.dialogue} typ=${info.ui?.typing} btn=${btns.length} cmb=${info.st.combat} fade=${info.ui?.fade}\n`);
   const sig = JSON.stringify([info.step.scene, info.step.idx, info.step.t, info.st.locked, btns.length, info.ui?.dialogue, info.step.loc, info.ui?.typing]);
   stuck = sig === lastSig ? stuck + 1 : 0; lastSig = sig;
+  const psig = `${info.step.scene}#${info.step.idx}@${info.step.loc}:${info.step.pending}:${info.st.ch}`;
+  if (psig !== progressSig) { progressSig = psig; progressAt = Date.now(); }
+  if (Date.now() - progressAt > 45000) stuck = 999;
+  if (logs.length) { for (const m of logs.splice(0)) if (!/GPU stall/.test(m)) L('console ' + m); }
   if (stuck > 200) { L('BLOQUÉ : ' + JSON.stringify(info)); await page.screenshot({ path: '/tmp/autoplay-stuck.png' }); break; }
   if (info.ui?.fade > 0.6 && !info.ui.dialogue && !btns.length) { await sleep(120); continue; }
 

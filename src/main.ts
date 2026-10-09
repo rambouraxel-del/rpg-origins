@@ -40,6 +40,21 @@ async function enterGame(kind: 'new' | 'load'): Promise<void> {
   if (kind === 'new') { await w.director.startNewGame(); } else { await w.director.resume(); }
 }
 
+const CANON_ORDER = ['P01', 'P02', 'P03', 'P04', 'P05', ...Array.from({ length: 10 }, (_, c) => [1, 2, 3, 4, 5].map((n) => `C${String(c + 1).padStart(2, '0')}S${String(n).padStart(2, '0')}`)).flat(), 'A01', 'A02', 'A03', 'B01', 'B02', 'B03'];
+const jump = params.get('jump');
+if (hub.devMode && jump) {
+  hub.events.once('title-ready', async () => {
+    freshGame();
+    const sm = game.scene;
+    sm.stop('Title');
+    sm.start('World'); sm.start('UI');
+    await new Promise<void>((r) => { const c = () => (hub.world && hub.ui ? r() : setTimeout(c, 30)); c(); });
+    await hub.world!.director.jumpTo(jump, CANON_ORDER);
+    hub.ui.setHud(true);
+    await hub.world!.director.resume();
+  });
+}
+
 hub.events.on('world-ready', (w: WorldScene) => { hub.world = w; });
 hub.events.on('title-choice', (mode: string) => {
   if (mode === 'new') { freshGame(); void enterGame('new'); }

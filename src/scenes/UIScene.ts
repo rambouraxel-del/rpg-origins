@@ -11,6 +11,18 @@ import { showFinalChoice, showEpilogue, showCredits } from '../ui/ending';
 import { POWERS } from '../data/powers';
 import { audio } from '../systems/Audio';
 
+/** Avant C06S02 l'interface ne dit jamais « Elyan » (bible §4.1) : le nom reste dans les données, le texte affiché le remplace. */
+export function scrubName(t: string): string {
+  const s = hub.state;
+  if (s.flags.identity_known || s.flags._ended) return t;
+  const who = s.chapter === 0 ? 'prince' : "l'Étranger";
+  const cap = s.chapter === 0 ? 'Le prince' : "L'Étranger";
+  return t
+    .replace(/d'Elyan/g, s.chapter === 0 ? 'du prince' : "de l'Étranger")
+    .replace(/(^|[.!?…»]\s+)Elyan/g, `$1${cap}`)
+    .replace(/Elyan/g, s.chapter === 0 ? 'le prince' : who);
+}
+
 export class UIScene extends Phaser.Scene implements UiApi {
   private hpBar!: ReturnType<typeof bar>;
   private enBar!: ReturnType<typeof bar>;
@@ -130,7 +142,8 @@ export class UIScene extends Phaser.Scene implements UiApi {
     if (t) { this.promptText.setText(t); this.promptBg.width = Math.max(220, this.promptText.width + 40); }
   }
 
-  toast(t: string): void {
+  toast(t0: string): void {
+    const t = scrubName(t0);
     const y = 56 + this.toastBox.length * 36;
     const tx = text(this, GAME_W / 2, y, t, 16, COL.text, 700).setOrigin(0.5, 0.5).setDepth(DEPTH.ui + 50).setAlpha(0);
     const bg = this.add.rectangle(GAME_W / 2, y, Math.min(740, tx.width + 36), tx.height + 14, 0x0f1620, 0.9).setStrokeStyle(2, COL.edge, 0.8).setDepth(DEPTH.ui + 49).setAlpha(0);
@@ -180,7 +193,8 @@ export class UIScene extends Phaser.Scene implements UiApi {
       const py = hub.world?.player.y ?? 200;
       this.dlg.y = py > 290 ? 66 : 378;
       this.dlg.setVisible(true);
-      for (const ln of lines) {
+      for (const ln0 of lines) {
+        const ln = { ...ln0, text: scrubName(ln0.text) };
         const who = ln.narr ? '' : nameOf(ln.who);
         this.dlgName.setText(who);
         this.dlgNameBg.clear();

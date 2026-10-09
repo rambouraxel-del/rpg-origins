@@ -22,6 +22,7 @@ export class TitleScene extends Phaser.Scene {
     mk('Options', () => this.start('menu-options'));
     text(this, 480, 505, 'ZQSD / flèches : se déplacer — E : agir — Échap : menu — F2 (mode développement ?dev=1) : zones', 14, COL.dim).setOrigin(0.5);
     text(this, 940, 520, 'v0.1', 12, COL.dim).setOrigin(1, 1);
+    this.time.delayedCall(50, () => hub.events.emit('title-ready'));
   }
   private start(mode: 'new' | 'continue' | 'menu-saves' | 'menu-options'): void {
     hub.events.emit('title-choice', mode);

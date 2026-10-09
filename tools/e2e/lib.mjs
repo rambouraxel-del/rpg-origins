@@ -17,7 +17,7 @@ export async function launch({ width = 960, height = 540, url = 'http://127.0.0.
   const browser = await chromium.launch({ executablePath: chromePath(), args: ['--no-sandbox', '--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width, height } });
   const logs = [];
-  page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) logs.push(`[${m.type()}] ${m.text()}`); });
+  page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) logs.push(`[${m.type()}] ${m.text()}`); if (process.env.E2E_INFO && m.type() === 'info') logs.push(`[info] ${m.text()}`); });
   page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));
   page.on('requestfailed', (r) => logs.push(`[requestfailed] ${r.url()}`));
   await page.goto(url);
