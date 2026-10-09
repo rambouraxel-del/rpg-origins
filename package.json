@@ -7,12 +7,16 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "image:generate": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts generate",
+    "image:edit": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts edit",
+    "typecheck:tools": "tsc -p tsconfig.tools.json"
   },
   "dependencies": {
     "phaser": "^4.2.1"
   },
   "devDependencies": {
+    "@types/node": "^26.6.4",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
   }

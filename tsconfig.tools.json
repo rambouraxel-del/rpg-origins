@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "lib": ["ES2023", "DOM"]
+  },
+  "include": ["tools/images"]
+}
