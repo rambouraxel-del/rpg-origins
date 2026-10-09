@@ -1,13 +1,17 @@
 {
-  "monthlyBudgetUsd": 10,
-  "safetyMargin": 0.2,
+  "plannedBudgetEur": 12,
+  "hardCapEur": 15,
+  "eurPerUsdBound": 1.0,
+  "feeFactor": 1.1,
   "maxImagesPerCall": 5,
+  "policyImagesPerCall": 1,
   "maxImagesPerSession": 100,
   "similarityThreshold": 0.7,
   "maxComparableFailures": 2,
   "recoveredLedger": {
-    "monthlyBudgetUsd": 1,
+    "plannedBudgetEur": 1,
     "maxImagesPerSession": 20
   },
-  "inventoryMaxAgeMinutes": 120
+  "inventoryMaxAgeMinutes": 120,
+  "_note": "Plafond cumulé du jeu (toutes sessions et branches) : 12 EUR de production planifiée, 15 EUR au maximum (3 EUR de protection compris). Coûts calculés en USD ; borne de conversion prudente 1 USD = 1 EUR (le taux réel est inférieur) x frais 1,1. La stratégie : 1 image par appel (appliquée par la CLI)."
 }

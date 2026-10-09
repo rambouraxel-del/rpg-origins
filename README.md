@@ -1,57 +1,23 @@
-# RPG Origins
+# RPG Origins — La mémoire du monde
 
-RPG 2D en style non-pixel art n°9, jouable dans le navigateur (Phaser + TypeScript + Vite).
+RPG 2D d'exploration narrative en style peint n°9 (non pixel art), jouable dans le navigateur (Phaser 4 + TypeScript + Vite).
+Écrans fixes 960×540 (16:9), déplacement libre, dialogues, énigmes, infiltration, combat en temps réel avec pause de réflexion, sept pouvoirs, trois compagnons, quêtes secondaires, deux fins.
 
-## Lancer en local
-
-```bash
-npm install
-npm run dev        # puis ouvrir l'adresse affichée (http://localhost:5173)
-npm run build      # vérification TypeScript + build dans dist/
-```
-
-## Rendu
-
-Style non-pixel art n°9 : rendu lissé (`pixelArt` désactivé, pas de `image-rendering: pixelated`). Résolution interne 960×540 (16:9),
-mise à l'échelle de la fenêtre avec lissage. Exception temporaire : le héros est encore en pixel art et garde un filtrage NEAREST
-(`applyHeroTextureFilter` dans `entities/Player.ts`), à retirer quand il passera au style n°9.
-
-### Prototype style n°9 (branche `proto/style9`)
-
-Forêt avec le décor de référence (`public/assets/areas/forest-style9.png`) et héros extrait de la planche de référence
-(8 poses statiques, `public/assets/hero-style9/hero9-dirs.png`, généré par `tools/extract-style9-hero.py`).
-Ajouter `?art=legacy` à l'adresse pour revenir aux anciens assets, conservés tels quels.
-
-## Contrôles
-
-Déplacement : ZQSD, WASD ou flèches. Maj : courir.
-
-Mode débogage : ajouter `?debug` à l'adresse pour afficher les collisions.
+- Lancer, tester, déployer : [`docs/LANCEMENT.md`](docs/LANCEMENT.md)
+- Sources de vérité : [`docs/RPG_Origins_Bible_Narrative_v1.md`](docs/RPG_Origins_Bible_Narrative_v1.md) (récit), [`docs/RPG_Origins_Regles_Gameplay_v0_1.md`](docs/RPG_Origins_Regles_Gameplay_v0_1.md) (systèmes), [`docs/RPG_Origins_Cahier_Technique_Production_v1.md`](docs/RPG_Origins_Cahier_Technique_Production_v1.md) (production)
+- Suivi de production : [`production/`](production/) (`RESUME.md`, `STATE.json`, `TASKS.md`, `COVERAGE.csv`, `TESTS.md`, `DECISIONS.md`, `ASSETS.json`, `IMAGE_BUDGET.json`)
 
 ## Structure
-
 ```
-src/
-  config.ts                   Résolution interne (960x540, 16:9), vitesse, calques d'affichage
-  main.ts                     Configuration Phaser
-  scenes/BootScene.ts         Charge les images (décors, héros) et crée les animations
-  scenes/WorldScene.ts        Affiche une zone à partir de sa configuration
-  entities/Player.ts          Personnage
-  systems/InputController.ts  Clavier
-  world/types.ts              Format d'une zone (décor, apparitions, sorties, collisions...)
-  world/areas/*.ts            Une zone par fichier : forêt, clairière, sanctuaire
-public/assets/              Images du jeu (décors 960x540, bandes d'animation du héros)
-assets-src/                 Sources originales (décors, GIF du héros)
-tools/gif-to-strip.py       Convertit les GIF du héros en bandes PNG
+src/core/        état de jeu, effets idempotents, sauvegardes (export/import)
+src/systems/     Director (exécute les scènes de données), Combat, Stealth, Actor, Audio procédural, Éditeur de zones
+src/scenes/      Boot, Title, World (lieu générique), UI (HUD, dialogues, menus)
+src/ui/          menus, énigmes, choix final, épilogues, crédits
+src/data/        contenu éditable : scenes/ (61 scènes), quests/ (12 quêtes), locations/ (27 lieux), items, powers, balance…
+public/assets/   fonds (areas/), personnages (chars/), héros (hero-style9/)
+assets-src/      références de style n°9, originaux des décors et des planches de personnages
+tools/           harnais d'images (budget), validation des données, outils d'assets, tests e2e
 ```
 
-Collisions : chaque zone liste des rectangles `walkable` (où les pieds du héros peuvent aller) ;
-tout le reste est un obstacle. Un décor se remplace en gardant le même nom de fichier.
-
-Ajouter une zone : créer un fichier dans `src/world/areas/`, l'ajouter à `index.ts`
-et à `AreaId` dans `types.ts`, puis la relier par une sortie (`exits`).
-
-## Déploiement
-
-Chaque push sur `main` déploie automatiquement sur GitHub Pages
-(Settings → Pages → Source : **GitHub Actions**).
+## Contenu en données
+Un fichier de scène est une suite d'étapes (`say`, `reach`, `inspect`, `talk`, `choice`, `puzzle`, `combat`, `guide`, `stealth`, `move`, `if`, `gate`, `finalChoice`, `end`…) et d'effets d'une liste fermée (`flag`, `power`, `item`, `quest`, `trust`, `chapter`, `party`, `journal`, `save`…). Aucun code arbitraire dans les données. `npm run validate` contrôle les identifiants, les ancres, les sorties et l'accessibilité réelle de chaque zone.

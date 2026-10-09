@@ -121,6 +121,8 @@ export interface Summary {
   sessionImages: number;
   sessionCountedUsd: number;
   monthImages: number;
+  /** Tous mois confondus : base du plafond cumulé du jeu. */
+  totalCountedUsd: number;
 }
 
 /** Verdict d'un appel : "ok" si au moins une image est acceptée, "fail" si toutes sont rejetées, undefined tant que des images ne sont pas évaluées. */
@@ -163,6 +165,7 @@ export interface Summary {
   sessionImages: number;
   sessionCountedUsd: number;
   monthImages: number;
+  totalCountedUsd: number;
 }
 
 /**
@@ -183,6 +186,7 @@ export function summarize(events: LedgerEvent[], session: string, month = monthO
     sessionImages: sum(mine, (c) => c.n),
     sessionCountedUsd: sum(mine, (c) => c.countedUsd),
     monthImages: sum(inMonth.filter((c) => c.state !== 'released'), (c) => c.n),
+    totalCountedUsd: sum(all, (c) => c.countedUsd),
   };
 }
 

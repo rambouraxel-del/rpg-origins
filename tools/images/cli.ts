@@ -35,13 +35,13 @@ function status(): void {
   const ses = sessionInfo();
   const s = summarize(readLedger(ses.id), ses.id);
   const conservative = s.recovered || !ses.reliable;
-  const budget = s.recovered ? Math.min(cfg.monthlyBudgetUsd, cfg.recoveredLedger.monthlyBudgetUsd) : cfg.monthlyBudgetUsd;
-  const usable = budget * (1 - cfg.safetyMargin);
+  const budgetEur = s.recovered ? Math.min(cfg.plannedBudgetEur, cfg.recoveredLedger.plannedBudgetEur) : cfg.plannedBudgetEur;
   const maxSession = conservative ? Math.min(cfg.maxImagesPerSession, cfg.recoveredLedger.maxImagesPerSession) : cfg.maxImagesPerSession;
+  const committedEur = s.totalCountedUsd * cfg.eurPerUsdBound * cfg.feeFactor;
   console.log(`Session ${ses.id} (${ses.reliable ? 'identifiant fiable' : 'IDENTIFIANT NON FIABLE : compteur partagé et plafonds conservateurs'}, source : ${ses.source})`);
   console.log(`  ${s.sessionImages}/${maxSession} images, ${s.sessionCountedUsd.toFixed(4)} $ comptés`);
+  console.log(`Cumul du jeu : ${committedEur.toFixed(4)} € engagés (réservations et dépenses, conversion bornée 1 $ = ${cfg.eurPerUsdBound} €, frais x${cfg.feeFactor}) sur ${budgetEur} € planifiés (plafond absolu ${cfg.hardCapEur} €, protection de 3 € comprise) — reste ${Math.max(0, budgetEur - committedEur).toFixed(4)} €`);
   console.log(`Mois ${s.month} : ${s.monthImages} images — estimé ${s.monthEstUsd.toFixed(4)} $ | calculé depuis les tokens ${s.monthObsUsd.toFixed(4)} $ | compté ${s.monthCountedUsd.toFixed(4)} $`);
-  console.log(`Plafond utilisable : ${usable.toFixed(2)} $ (budget ${budget} $, marge ${cfg.safetyMargin * 100} %) — reste ${Math.max(0, usable - s.monthCountedUsd).toFixed(4)} $`);
   const pers = persistenceStatus();
   console.log(`Registre : ${paths().ledger}${s.recovered ? '  [RÉCUPÉRÉ : plafonds conservateurs]' : ''}`);
   console.log(`Persistance : ${pers.detail}`);
@@ -71,6 +71,7 @@ try {
     console.log(`Revue enregistrée : ${values.file} → ${values.verdict}`);
   } else if (mode === 'generate' || mode === 'edit') {
     if (!values.prompt || (mode === 'edit' && !values.input?.length)) usage();
+    if ((values.n ? Number(values.n) : 1) > loadConfig().policyImagesPerCall) throw new GuardError('POLICY_ONE_PER_CALL', `Politique du projet : ${loadConfig().policyImagesPerCall} image par appel.`);
     const common = {
       prompt: values.prompt!, model: values.model, quality: values.quality, size: values.size, output: values.output, n: values.n ? Number(values.n) : 1,
       purpose: values.purpose ?? '', target: values.target ?? '', reuseChecked: values['reuse-checked'] ?? '',

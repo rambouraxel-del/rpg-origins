@@ -1,17 +1,21 @@
-// Résolution interne 16:9 (affichée à l'échelle de la fenêtre, ex. x2 => 1920x1080, avec lissage).
-// Les décors (style non-pixel art n°9) sont en 960x540. Le héros (92x92, pixel art provisoire) est affiché à sa taille d'origine.
-export const GAME_WIDTH = 960;
-export const GAME_HEIGHT = 540;
+// Constantes globales. Écran logique fixe 960x540 (16:9), caméra fixe.
+export const GAME_W = 960;
+export const GAME_H = 540;
 
-export const PLAYER_SPEED = 130; // pixels / seconde
-export const PLAYER_RUN_SPEED = 220; // avec Maj
-
-// Ordre d'affichage des calques.
 export const DEPTH = {
-  ground: 0,
-  decor: 10,
-  entities: 20, // joueur, PNJ, objets interactifs
-  foreground: 30, // éléments qui passent devant le joueur (feuillages, arches...)
-  effects: 40, // pluie, brouillard, lumières...
-  ui: 100,
+  background: 0,
+  ground: 10,
+  /** Les entités se trient par y des pieds (ENTITY_BASE + y). */
+  entityBase: 1000,
+  foreground: 5000,
+  fx: 6000,
+  ui: 10000,
 } as const;
+
+export const HERO_SCALE = 0.85;
+export const WALK_SPEED = 150;
+export const RUN_SPEED = 230;
+export const INTERACT_RADIUS = 62;
+export const SAVE_VERSION = 1;
+/** Version du scénario : sert aux migrations de sauvegarde. */
+export const SCENARIO_VERSION = 1;

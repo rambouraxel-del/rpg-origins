@@ -151,7 +151,7 @@ export function preflight(d: Decision, events: LedgerEvent[], session: string): 
     }
   }
 
-  // Plafonds : session puis budget mensuel (avec marge)
+  // Plafonds : session puis budget cumulé du jeu (euros, frais et conversion inclus)
   const sum = summarize(events, session);
   // Registre récupéré ou identifiant de session non fiable : plafond conservateur.
   const conservative = sum.recovered || unknownSession;
@@ -160,10 +160,12 @@ export function preflight(d: Decision, events: LedgerEvent[], session: string): 
     throw new GuardError('SESSION_LIMIT', `Limite de session atteinte : ${sum.sessionImages} images déjà comptées + ${d.n} > ${maxSession}${sum.recovered ? ' (mode registre récupéré)' : ''}${unknownSession ? ' (identifiant de session non fiable : compteur partagé sur le mois)' : ''}.`);
   }
   const estUsd = estimateUsd(pricing, { model: d.model, quality: d.quality, size: d.size, n: d.n, promptChars: d.prompt.length, inputImages: d.inputImages } satisfies CostInput, observedTokensPerMp(events));
-  const budget = sum.recovered ? Math.min(cfg.monthlyBudgetUsd, cfg.recoveredLedger.monthlyBudgetUsd) : cfg.monthlyBudgetUsd;
-  const usable = budget * (1 - cfg.safetyMargin);
-  if (sum.monthCountedUsd + estUsd > usable) {
-    throw new GuardError('BUDGET', `Budget bloquant : ${sum.monthCountedUsd.toFixed(4)} $ déjà comptés + ${estUsd.toFixed(4)} $ estimés > ${usable.toFixed(2)} $ utilisables (budget ${budget} $, marge ${cfg.safetyMargin * 100} %${sum.recovered ? ', registre récupéré' : ''}).`);
+  const budgetEur = sum.recovered ? Math.min(cfg.plannedBudgetEur, cfg.recoveredLedger.plannedBudgetEur) : cfg.plannedBudgetEur;
+  const toEur = (usd: number) => usd * cfg.eurPerUsdBound * cfg.feeFactor;
+  const committedEur = toEur(sum.totalCountedUsd);
+  const estEur = toEur(estUsd);
+  if (committedEur + estEur > budgetEur || committedEur + estEur > cfg.hardCapEur) {
+    throw new GuardError('BUDGET', `Budget bloquant : ${committedEur.toFixed(4)} € déjà engagés (dépenses + réservations) + ${estEur.toFixed(4)} € réservés pour cet appel > ${budgetEur} € de production planifiée (plafond absolu ${cfg.hardCapEur} €, protection de 3 € comprise${sum.recovered ? ', registre récupéré' : ''}).`);
   }
   if (!pricing.rates.verified) warnings.push(`Prix par token non vérifiés : estimation multipliée par ${pricing.rates.unverifiedRatesFactor}.`);
   if (unknownSession) warnings.push('Identifiant de session Claude Code Cloud introuvable : limites conservatrices (20 images, compteur partagé).');

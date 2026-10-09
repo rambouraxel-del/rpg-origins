@@ -1,0 +1,3 @@
+# Besoins d'images (décors) — fiche par besoin (cahier §14.1)
+Format : 1536x864 (16:9) réduit à 960x540 ; vue de dessus légèrement inclinée ; pas de transparence ; référence unique : assets-src/style-reference/style9-reference-decor.png (style seulement) ; interdits : personnages, texte, UI, cadre ; critères : lisibilité de la zone jouable centrale, bords encadrés, sorties dessinées là où prévu, palette claire (pas de scène sombre), cohérence avec la référence.
+Un besoin logique = une demande + au plus une correction payante motivée. Résultats consignés dans tools/images/ledger/ledger.jsonl (source financière unique) et production/ASSETS.json.

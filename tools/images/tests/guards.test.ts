@@ -61,7 +61,7 @@ beforeEach(() => {
   mkdirSync(join(dir, 'assets', 'areas'), { recursive: true });
   writeFileSync(join(dir, 'assets', 'areas', 'forest.png'), makePng(96, 54));
   writeFileSync(join(dir, 'assets', 'areas', 'clearing.png'), makePng(96, 54, true));
-  delete process.env.IMAGE_MONTHLY_BUDGET_USD;
+  delete process.env.IMAGE_PLANNED_BUDGET_EUR;
   delete process.env.IMAGE_SESSION_LIMIT;
   process.env.IMAGE_API_BASE = ORIG_API;
   hits = 0; behavior = 'ok';
@@ -168,26 +168,26 @@ test('plafond de 100 images par session par défaut', async () => {
   await blocked(G(), 'SESSION_LIMIT');
 });
 
-test('budget mensuel : plafond, puis marge de sécurité de 20 %', async () => {
-  process.env.IMAGE_MONTHLY_BUDGET_USD = '0.001';
+test('budget cumulé en euros : plafond, puis frais et conversion inclus', async () => {
+  process.env.IMAGE_PLANNED_BUDGET_EUR = '0.001';
   await blocked(G(), 'BUDGET');
   assert.equal(hits, 0);
-  process.env.IMAGE_MONTHLY_BUDGET_USD = '1';
+  process.env.IMAGE_PLANNED_BUDGET_EUR = '1';
   const { estUsd } = await G({ task: 'mesure' });
-  // Le budget brut couvrirait la 2e estimation, mais pas une fois la marge retirée.
-  const spent = state().monthCountedUsd;
-  process.env.IMAGE_MONTHLY_BUDGET_USD = String((spent + estUsd) * 1.05);
+  // Le budget brut couvrirait la 2e estimation, mais pas une fois les frais majorés.
+  const spent = state().totalCountedUsd;
+  process.env.IMAGE_PLANNED_BUDGET_EUR = String((spent + estUsd) * 1.05);
   await blocked(G({ task: 'marge' }), 'BUDGET');
   assert.equal(hits, 1);
 });
 
-test('la dépense du mois précédent ne compte pas', async () => {
+test('la dépense du mois précédent COMPTE (plafond cumulé du jeu)', async () => {
   writeFileSync(process.env.IMAGE_LEDGER_FILE!, readFileSync(process.env.IMAGE_LEDGER_FILE!, 'utf8') + [
-    { ev: 'reserve', id: 'old', ts: '2020-01-01T00:00:00Z', month: '2020-01', session: 'x', task: 'old', n: 1, estUsd: 9.9 },
-    { ev: 'settle', id: 'old', ts: '2020-01-01T00:00:00Z', month: '2020-01', session: 'x', obsUsd: 9.9 },
+    { ev: 'reserve', id: 'old', ts: '2020-01-01T00:00:00Z', month: '2020-01', session: 'x', task: 'old', n: 1, estUsd: 12 },
+    { ev: 'settle', id: 'old', ts: '2020-01-01T00:00:00Z', month: '2020-01', session: 'x', obsUsd: 12 },
   ].map((e) => JSON.stringify(e)).join('\n') + '\n');
-  await G();
-  assert.equal(hits, 1);
+  await blocked(G(), 'BUDGET');
+  assert.equal(hits, 0);
 });
 
 test('erreur API 4xx : libérée (rien compté), pas de nouvelle tentative', async () => {
@@ -266,16 +266,17 @@ test("les variables d'environnement ne peuvent que réduire les plafonds", () =>
   assert.equal(capped(100, undefined), 100);
   assert.equal(capped(100, '50'), 50);
   process.env.IMAGE_SESSION_LIMIT = '1000';
-  process.env.IMAGE_MONTHLY_BUDGET_USD = '999';
+  process.env.IMAGE_PLANNED_BUDGET_EUR = '999';
   const c = loadConfig();
   assert.equal(c.maxImagesPerSession, 100);
-  assert.equal(c.monthlyBudgetUsd, 10);
+  assert.equal(c.plannedBudgetEur, 12);
+  assert.equal(c.hardCapEur, 15);
   assert.equal(c.maxImagesPerCall, 5);
-  assert.equal(c.safetyMargin, 0.2);
+  assert.equal(c.policyImagesPerCall, 1);
   process.env.IMAGE_SESSION_LIMIT = '7';
-  process.env.IMAGE_MONTHLY_BUDGET_USD = '3';
+  process.env.IMAGE_PLANNED_BUDGET_EUR = '3';
   assert.equal(loadConfig().maxImagesPerSession, 7);
-  assert.equal(loadConfig().monthlyBudgetUsd, 3);
+  assert.equal(loadConfig().plannedBudgetEur, 3);
 });
 
 test('IMAGE_SESSION_LIMIT=1000 ne relève pas le plafond réel de 100 images', async () => {
@@ -286,7 +287,7 @@ test('IMAGE_SESSION_LIMIT=1000 ne relève pas le plafond réel de 100 images', a
   ].map((e) => JSON.stringify(e)).join('\n')).join('\n') + '\n';
   appendFileSync(process.env.IMAGE_LEDGER_FILE!, lines);
   process.env.IMAGE_SESSION_LIMIT = '1000';
-  process.env.IMAGE_MONTHLY_BUDGET_USD = '999';
+  process.env.IMAGE_PLANNED_BUDGET_EUR = '999';
   await blocked(G(), 'SESSION_LIMIT');
 });
 

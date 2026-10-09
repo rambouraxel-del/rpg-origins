@@ -1,0 +1,12 @@
+{
+  "repo": "rambouraxel-del/rpg-origins",
+  "remote": "https://github.com/rambouraxel-del/rpg-origins",
+  "branch": "claude/rpg-origins-complete",
+  "branchType": "orpheline (git worktree add --orphan)",
+  "sourceMain": "c5448b48e363b3419fdece3d4ffe0ab564641508",
+  "phase": "Lot 6-7 : vérification et livraison",
+  "currentTask": "Revue finale, rapport de livraison",
+  "verification": "validate OK; test:images 36/36; autoplay A/B (variantes) OK; persist 8/8; editor/audio OK",
+  "blockers": [],
+  "nextAction": "Finition optionnelle (visuels titre), rapport final ; déploiement manuel NON autorisé"
+}

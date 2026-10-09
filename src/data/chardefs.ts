@@ -1,0 +1,47 @@
+// Catalogue des personnages. `sheet` = planche générée/extraite (voir production/ASSETS.json) ; sans planche : silhouette provisoire dessinée par code.
+export interface CharSheet { key: string; url: string; frameW: number; frameH: number; /** 8 = bande de 8 vues (bas, bas-droite, droite, haut-droite, haut, haut-gauche, gauche, bas-gauche) ; 3 = bas, droite, haut (gauche = miroir) ; 1 = une seule vue de face */ views: 8 | 3 | 1 }
+export interface CharDef { id: string; name: string; color: number; hair: number; scale?: number; sheet?: CharSheet; role: string; /** Image unique (vue de face) de public/assets/chars/<id>.png ; sinon silhouette provisoire. */ img?: string }
+
+export const CHARS: Record<string, CharDef> = {
+  elyan: { id: 'elyan', name: 'Elyan', color: 0x2f4ea0, hair: 0xe8e8ee, role: 'héros', sheet: { key: 'hero9', url: 'assets/hero-style9/hero9-dirs.png', frameW: 59, frameH: 77, views: 8 } },
+  nara: { id: 'nara', name: 'Nara', color: 0x3f7a4a, hair: 0x6b3d2a, img: 'assets/chars/nara.png', role: 'compagnon' },
+  soren: { id: 'soren', name: 'Soren', color: 0x7b5a3a, hair: 0x2b2b3a, img: 'assets/chars/soren.png', role: 'compagnon' },
+  tessa: { id: 'tessa', name: 'Tessa', color: 0xb35a2a, hair: 0xd9a441, img: 'assets/chars/tessa.png', role: 'compagnon' },
+  eira: { id: 'eira', name: 'Eïra', color: 0x6fe3c5, hair: 0xbdfff0, role: 'présence' },
+  oren: { id: 'oren', name: 'Oren', color: 0x5a4a8a, hair: 0xcfcfcf, img: 'assets/chars/oren.png', role: 'mage' },
+  mira: { id: 'mira', name: 'Mira', color: 0x9b3b5a, hair: 0x7a4a2a, img: 'assets/chars/mira.png', role: 'reine' },
+  adrien: { id: 'adrien', name: 'Adrien', color: 0x2a3a6a, hair: 0x4a3a2a, img: 'assets/chars/adrien.png', role: 'roi' },
+  ysane: { id: 'ysane', name: 'Ysane', color: 0x3a8a7a, hair: 0xb9b9b9, img: 'assets/chars/ysane.png', role: 'reine des Veilleurs' },
+  ilan: { id: 'ilan', name: 'Ilan', color: 0x4a8a3a, hair: 0x5a3a22, img: 'assets/chars/ilan.png', role: 'messager' },
+  darel: { id: 'darel', name: 'Darel', color: 0x8a6a3a, hair: 0x8a8a8a, img: 'assets/chars/darel.png', role: 'guérisseur' },
+  meline: { id: 'meline', name: 'Méline', color: 0x6a9a3a, hair: 0x4a2a1a, img: 'assets/chars/meline.png', role: 'jardinière' },
+  arven: { id: 'arven', name: 'Arven', color: 0x6a3a2a, hair: 0x1a1a1a, img: 'assets/chars/arven.png', role: 'porte-parole' },
+  lume: { id: 'lume', name: 'Lume', color: 0xd96a8a, hair: 0x3a2a1a, img: 'assets/chars/lume.png', role: 'enfant', scale: 0.8 },
+  vaelor: { id: 'vaelor', name: 'Vaelor', color: 0x3a3a4a, hair: 0xaaaaaa, img: 'assets/chars/vaelor.png', role: 'commandant' },
+  ilyra: { id: 'ilyra', name: 'Ilyra', color: 0x4a5a7a, hair: 0x2a2a2a, img: 'assets/chars/ilyra.png', role: 'ingénieure' },
+  ravel: { id: 'ravel', name: 'Ravel', color: 0x2a2a3a, hair: 0x6a5a3a, img: 'assets/chars/ravel.png', role: 'officier' },
+  meunier: { id: 'meunier', name: 'Le meunier', color: 0x8a7a5a, hair: 0x7a7a7a, img: 'assets/chars/meunier.png', role: 'villageois' },
+  gardien: { id: 'gardien', name: 'Le gardien', color: 0x4a4a5a, hair: 0x3a3a3a, img: 'assets/chars/gardien.png', role: 'stellaire' },
+  soldat: { id: 'soldat', name: 'Soldat stellaire', color: 0x44445a, hair: 0x2a2a2a, img: 'assets/chars/soldat.png', role: 'stellaire' },
+  garde: { id: 'garde', name: 'Le garde', color: 0x7a2a2a, hair: 0x3a2a1a, img: 'assets/chars/garde.png', role: 'palais' },
+  jardinier: { id: 'jardinier', name: 'Le jardinier', color: 0x5a7a3a, hair: 0x9a8a6a, img: 'assets/chars/jardinier.png', role: 'palais' },
+  courtisan: { id: 'courtisan', name: 'Un courtisan', color: 0x7a3a8a, hair: 0x4a3a2a, img: 'assets/chars/courtisan.png', role: 'palais' },
+  intendant: { id: 'intendant', name: "L'intendant", color: 0x6a5a2a, hair: 0x6a6a6a, img: 'assets/chars/intendant.png', role: 'palais' },
+  civil: { id: 'civil', name: 'Un civil', color: 0x8a8a6a, hair: 0x5a4a3a, img: 'assets/chars/civil.png', role: 'foule' },
+  refugie: { id: 'refugie', name: 'Un réfugié', color: 0x6a7a8a, hair: 0x4a3a2a, img: 'assets/chars/refugie.png', role: 'foule' },
+  stellaire: { id: 'stellaire', name: 'Civil stellaire', color: 0x5a6a9a, hair: 0x3a3a3a, img: 'assets/chars/stellaire.png', role: 'foule' },
+  technicien: { id: 'technicien', name: 'Le technicien', color: 0x4a7a8a, hair: 0x2a2a2a, img: 'assets/chars/technicien.png', role: 'stellaire' },
+  habitant: { id: 'habitant', name: 'Un habitant', color: 0x8a6a5a, hair: 0x4a3a2a, img: 'assets/chars/habitant.png', role: 'foule' },
+  pecheur: { id: 'pecheur', name: 'Un pêcheur', color: 0x5a7a8a, hair: 0x6a5a3a, img: 'assets/chars/pecheur.png', role: 'foule' },
+  cuisiniere: { id: 'cuisiniere', name: 'La cuisinière', color: 0xa86a3a, hair: 0x3a2a1a, img: 'assets/chars/cuisiniere.png', role: 'foule' },
+  apprenti: { id: 'apprenti', name: "L'apprenti", color: 0x6a8a5a, hair: 0x5a3a22, img: 'assets/chars/apprenti.png', role: 'foule' },
+  oiseau: { id: 'oiseau', name: 'Oiseau clair', color: 0xe8f4ff, hair: 0xe8f4ff, img: 'assets/chars/oiseau.png', role: 'animal', scale: 0.4 },
+  bete: { id: 'bete', name: 'Petite bête', color: 0xb08a5a, hair: 0xb08a5a, img: 'assets/chars/bete.png', role: 'animal', scale: 0.5 },
+  automate: { id: 'automate', name: 'Automate', color: 0x8a8a9a, hair: 0x8a8a9a, img: 'assets/chars/automate.png', role: 'machine' },
+  sentinelle: { id: 'sentinelle', name: 'Sentinelle', color: 0x9a7a4a, hair: 0x9a7a4a, img: 'assets/chars/sentinelle.png', role: 'machine' },
+  representant: { id: 'representant', name: 'Représentant de Vaelor', color: 0x3a3a4a, hair: 0x6a6a6a, img: 'assets/chars/representant.png', role: 'stellaire' },
+  refugiee: { id: 'refugiee', name: 'Une réfugiée', color: 0x7a8a6a, hair: 0x3a2a1a, img: 'assets/chars/refugiee.png', role: 'foule' },
+  pompage: { id: 'pompage', name: 'Unité de pompage', color: 0x4a8a9a, hair: 0x4a8a9a, img: 'assets/chars/pompage.png', role: 'machine' },
+};
+
+export const COMPANIONS = ['nara', 'soren', 'tessa'] as const;
