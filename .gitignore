@@ -6,3 +6,4 @@ dist
 # Images générées (essais) et journal des générations
 public/assets/generated/
 logs/
+dist-tools

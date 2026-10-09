@@ -106,16 +106,42 @@ export class Director {
       if (sp) { this.world.player.setPos(sp.x, sp.y); this.world.syncFollowers(true); }
     }
     this.world.placeActors(def.actors);
+    this.registerAmbient(def);
     this.world.syncFollowers();
     this.afterLocationLoad();
     hub.ui.objective(null);
+    this.nextOverride = null;
     for (let i = from; i < def.steps.length; i++) {
       s.stepIndex = i;
-      await this.runStep(def.steps[i], `${id}:${i}`, def.id);
+      const r = await this.runStep(def.steps[i], `${id}:${i}`, def.id);
       if (myRun !== this.runId) return;
+      if (r && r.suspend) { this.suspend(def, Math.max(0, i - r.suspend.back), r.suspend); return; }
     }
     this.finishScene(def);
   }
+
+  private registerAmbient(def: SceneDef): void {
+    for (const a of def.ambient ?? []) {
+      this.world.onTalk(a.npc, async () => { await hub.ui.say(a.lines); applyEffects(hub.state, a.effects, `amb:${def.id}:${a.npc}`); });
+    }
+  }
+
+  /** Met la scène en attente : le joueur explore ; un point d'entrée relance l'étape de choix. */
+  private suspend(def: SceneDef, resumeAt: number, g: { at: string; label: string; text: string }): void {
+    const s = hub.state;
+    this.activeScene = null;
+    s.currentScene = null;
+    s.stepIndex = resumeAt;
+    s.flags[`resume_${def.id}`] = resumeAt;
+    this.pending = def.id;
+    this.running = false;
+    this.world.placeActors(undefined);
+    this.world.setSceneHotspots([{ id: `resume:${def.id}`, at: g.at, label: g.label, text: [], verb: 'Entrer' }]);
+    hub.ui.objective(g.text);
+    hub.ui.toast(g.text);
+  }
+
+  private nextOverride: string | null = null;
 
   private finishScene(def: SceneDef): void {
     const s = hub.state;
@@ -126,7 +152,8 @@ export class Director {
     this.activeScene = null;
     s.currentScene = null;
     s.stepIndex = 0;
-    this.pending = def.next ?? null;
+    this.pending = this.nextOverride ?? def.next ?? null;
+    this.nextOverride = null;
     this.world.placeActors(undefined);
     this.world.setSceneHotspots(undefined);
     this.world.setTint(undefined);
@@ -136,7 +163,8 @@ export class Director {
     saveTo('auto');
     hub.events.emit('scene-done', def.id);
     if (def.summary) hub.ui.toast(def.summary);
-    const nxt = def.next ? hub.scenes.get(def.next) : undefined;
+    const nxtId = this.pending;
+    const nxt = nxtId ? hub.scenes.get(nxtId) : undefined;
     if (nxt && nxt.loc === this.world.loc.id && evalCond(s, nxt.requires)) void this.runScene(nxt.id, 0);
     else this.showObjectiveForPending();
   }
@@ -153,7 +181,7 @@ export class Director {
   }
 
   // ---------------------------------------------------------------- étapes
-  async runStep(step: Step, once: string, sceneId: string): Promise<void> {
+  async runStep(step: Step, once: string, sceneId: string): Promise<{ suspend?: { back: number; at: string; label: string; text: string } } | void> {
     const w = this.world, ui = hub.ui, s = hub.state;
     switch (step.t) {
       case 'say': {
@@ -248,6 +276,20 @@ export class Director {
         break;
       }
       case 'set': applyEffects(s, step.effects, once); break;
+      case 'if': {
+        const list = evalCond(s, step.cond) ? step.then : step.otherwise ?? [];
+        for (let i = 0; i < list.length; i++) { const r = await this.runStep(list[i], `${once}.${i}`, sceneId); if (r) return r; }
+        break;
+      }
+      case 'gate': {
+        if (s.flags[step.flag] !== true) return { suspend: { back: step.back, at: step.at, label: step.label, text: step.text } };
+        break;
+      }
+      case 'branch': {
+        const v = String(s.flags[step.key] ?? '');
+        this.nextOverride = step.map[v] ?? null;
+        break;
+      }
       case 'rest': {
         ui.objective(step.text);
         await new Promise<void>((resolve) => { const f = () => { hub.events.off('rested', f); resolve(); }; hub.events.on('rested', f); });

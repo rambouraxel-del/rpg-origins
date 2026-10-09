@@ -1,15 +1,16 @@
+// Les 61 scènes principales et finales dans l'ordre canonique (bible §21.2).
 import type { SceneDef } from '../../core/types';
+import { PROLOGUE } from './ch0';
+import { CH1 } from './ch1';
+import { CH2 } from './ch2';
+import { CH3 } from './ch3';
+import { CH4 } from './ch4';
+import { CH5 } from './ch5';
+import { CH6 } from './ch6';
+import { CH7 } from './ch7';
+import { CH8 } from './ch8';
+import { CH9 } from './ch9';
+import { CH10 } from './ch10';
+import { ENDINGS } from './endings';
 
-// TEMPORAIRE (lot 1) : scène témoin.
-export const SCENES: SceneDef[] = [
-  {
-    id: 'P01', chapter: 0, title: 'Scène témoin', loc: 'forest_arrival', spawn: 'start',
-    actors: [{ id: 'nara', at: 'center' }],
-    steps: [
-      { t: 'say', lines: [{ who: 'narr', narr: true, text: 'Scène témoin : déplacement, collision, profondeur, dialogue.' }, { who: 'nara', text: 'Regarde ce qui tient encore.' }] },
-      { t: 'talk', text: 'Parler à Nara', npc: 'nara', lines: [{ who: 'nara', text: 'Ton nom ?' }], choices: [{ label: 'Je ne sais pas.', set: { key: 'answer', value: 'unknown' } }, { label: 'Je viens d\'un village lointain.', set: { key: 'answer', value: 'lie' } }] },
-      { t: 'reach', text: 'Aller vers l\'est', zone: 'exit_east' },
-    ],
-    next: null,
-  },
-];
+export const SCENES: SceneDef[] = [...PROLOGUE, ...CH1, ...CH2, ...CH3, ...CH4, ...CH5, ...CH6, ...CH7, ...CH8, ...CH9, ...CH10, ...ENDINGS];

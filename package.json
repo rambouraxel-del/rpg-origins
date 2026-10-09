@@ -16,8 +16,10 @@
     "test:images": "NODE_NO_WARNINGS=1 node --test \"tools/images/tests/*.test.ts\"",
     "image:inventory": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts inventory",
     "image:inspect": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts inspect",
-    "test": "npm run test:images && npm run test:data",
-    "test:data": "NODE_NO_WARNINGS=1 node --test \"tools/tests/*.test.ts\""
+    "test": "npm run test:images && npm run validate",
+    "validate": "rolldown -c rolldown.validate.mjs >/dev/null 2>&1; node dist-tools/validate.mjs",
+    "validate:needs": "rolldown -c rolldown.validate.mjs >/dev/null 2>&1; node dist-tools/validate.mjs --needs",
+    "coverage": "rolldown -c rolldown.validate.mjs >/dev/null 2>&1; node dist-tools/validate.mjs --coverage"
   },
   "dependencies": {
     "phaser": "^4.2.1"

@@ -91,7 +91,13 @@ export type Step =
   | { t: 'set'; effects: Effect[] }
   | { t: 'rest'; text: string; effects?: Effect[] }
   | { t: 'end'; ending: 'A' | 'B' }
-  | { t: 'finalChoice' };
+  | { t: 'finalChoice' }
+  /** Exécute les étapes `then` si la condition est vraie, sinon `otherwise`. */
+  | { t: 'if'; cond: Cond; then: Step[]; otherwise?: Step[] }
+  /** Suspend la scène si le drapeau n'est pas vrai : le joueur peut explorer, puis reprendre au point d'entrée `at` (reculer de `back` étapes). */
+  | { t: 'gate'; flag: string; text: string; at: string; label: string; back: number }
+  /** Choisit la scène suivante d'après un drapeau. */
+  | { t: 'branch'; key: string; map: Record<string, string> };
 
 export interface ActorPlacement { id: string; at: Place; face?: Facing; label?: string }
 
@@ -109,6 +115,8 @@ export interface SceneDef {
   hotspots?: Hotspot[];
   /** Flashback / lumière particulière du lieu. */
   tint?: { color: number; alpha: number };
+  /** Dialogues facultatifs répétables avec des personnages de la scène (touche E). */
+  ambient?: { npc: string; lines: Line[]; effects?: Effect[] }[];
   steps: Step[];
   onComplete?: Effect[];
   next?: string | null;

@@ -11,10 +11,13 @@ export interface LocSpec {
   spawns?: LocationDef['spawns'];
 }
 
+export const R = (x: number, y: number, w: number, h: number): Rect => ({ x, y, w, h });
+export const P = (x: number, y: number): Pt => ({ x, y });
+
 const FACE: Record<ExitSpec['side'], Facing> = { left: 'right', right: 'left', up: 'down', down: 'up' };
 
 export function loc(s: LocSpec): LocationDef {
-  const spawns: LocationDef['spawns'] = { default: { x: 480, y: 400 }, ...(s.anchors.start ? { default: s.anchors.start } : {}), ...(s.spawns ?? {}) };
+  const spawns: LocationDef['spawns'] = { default: { x: 480, y: 400 }, ...(s.anchors.start ? { default: s.anchors.start, start: s.anchors.start } : {}), ...(s.spawns ?? {}) };
   const exits: ExitDef[] = s.exits.map((e) => {
     const rect: Rect = e.side === 'left' ? { x: 0, y: e.at - 55, w: 26, h: 110 } : e.side === 'right' ? { x: 934, y: e.at - 55, w: 26, h: 110 } : e.side === 'up' ? { x: e.at - 60, y: 120, w: 120, h: 34 } : { x: e.at - 60, y: 506, w: 120, h: 34 };
     const pos: Pt = e.side === 'left' ? { x: 70, y: e.at } : e.side === 'right' ? { x: 890, y: e.at } : e.side === 'up' ? { x: e.at, y: 190 } : { x: e.at, y: 468 };

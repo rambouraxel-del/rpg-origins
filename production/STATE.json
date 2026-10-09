@@ -4,9 +4,9 @@
   "branch": "claude/rpg-origins-complete",
   "branchType": "orpheline (git worktree add --orphan)",
   "sourceMain": "c5448b48e363b3419fdece3d4ffe0ab564641508",
-  "phase": "Lot 1 - Moteur",
-  "currentTask": "T1.x moteur écrit (src/), à tester avec vrais décors ; prochaine : rédiger les scènes (data) puis générer décors",
-  "verification": "tsc OK ; e2e scène témoin OK (WIP)",
+  "phase": "Lot 1-3 (WIP) : contenu narratif + décors",
+  "currentTask": "T2 sprites des personnages, autoplay e2e, audio",
+  "verification": "tsc OK ; npm run validate OK (61 scènes, 12 quêtes, 27 lieux) ; e2e scène témoin OK ; autoplay à faire",
   "blockers": [],
-  "nextAction": "Lire gameplay et bible, produire COVERAGE.csv, puis adapter le harnais au plafond 15 EUR (T0.4)"
+  "nextAction": "Générer les planches de personnages (harnais), écrire tools/e2e/autoplay.mjs, vérifier les 2 routes"
 }

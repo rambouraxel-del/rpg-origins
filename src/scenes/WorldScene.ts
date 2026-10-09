@@ -371,6 +371,7 @@ export class WorldScene extends Phaser.Scene {
   private async examine(id: string): Promise<void> {
     const h = this.allHotspots().find((x) => x.id === id);
     if (!h) return;
+    if (h.id.startsWith('resume:')) { const sid = h.id.split(':')[1]; hub.unlock(); try { this.setSceneHotspots(undefined); await this.director.runScene(sid, Number(hub.state.flags[`resume_${sid}`] ?? 0)); } finally { hub.lock(); } return; }
     if (h.id.startsWith('quest:')) { const qid = h.id.split(':')[1]; hub.unlock(); try { await this.director.runQuestStage(qid); } finally { hub.lock(); } return; }
     const r = this.hotRect(h);
     this.player.setFacingVec(r.x + r.w / 2 - this.player.x, r.y + r.h / 2 - this.player.y);
