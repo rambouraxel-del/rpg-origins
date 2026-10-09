@@ -1,6 +1,6 @@
 # RPG Origins
 
-RPG 2D pixel art 16-bit jouable dans le navigateur (Phaser + TypeScript + Vite).
+RPG 2D en style non-pixel art n°9, jouable dans le navigateur (Phaser + TypeScript + Vite).
 
 ## Lancer en local
 

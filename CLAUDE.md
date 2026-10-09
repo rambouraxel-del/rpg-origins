@@ -1,6 +1,6 @@
 # RPG Origins — instructions pour Claude Code
 
-RPG 2D pixel art 16-bit, jouable dans le navigateur (Phaser + TypeScript + Vite), déployé sur GitHub Pages à chaque push sur `main`.
+RPG 2D en style non-pixel art n°9, jouable dans le navigateur (Phaser + TypeScript + Vite), déployé sur GitHub Pages à chaque push sur `main`.
 Voir `README.md` pour la structure et `docs/images-openai.md` pour le pipeline d'images.
 
 ## Collaboration
@@ -19,7 +19,7 @@ Dès qu'une tâche demande un visuel nouveau ou modifié (décor, variante d'amb
 3. **Éditer plutôt que générer** quand il faut garder la composition d'un asset existant (`image:edit`) ; générer (`image:generate`) pour un contenu nouveau.
 4. **Qualité `low` par défaut.** Ne monte (`medium`, puis `high`) qu'après deux échecs documentés en `low`, avec `--quality-reason`. Taille par défaut `1536x864` (une taille plus petite comme 1024×576 est refusée par l'API).
 5. **Suivre le déroulé complet de `docs/images-openai.md`** : `image:inventory` → regarder la planche (outil Read) et lire le code → `image:generate` / `image:edit` → `image:inspect` → regarder l'aperçu et juger honnêtement → `image:review`. Les codes ne se devinent pas : ils ne se lisent qu'en ouvrant les images. Pas de validation humaine nécessaire tant que les garde-fous passent.
-6. **Un verdict `fail` doit être honnête** (composition modifiée, style qui dérive, objets ajoutés ou perdus, artefacts). Après deux échecs comparables, change d'approche ou traite par code ; ne boucle pas.
+6. **Un verdict `fail` doit être honnête** (composition modifiée, style qui s'écarte du style n°9, objets ajoutés ou perdus, artefacts). Après deux échecs comparables, change d'approche ou traite par code ; ne boucle pas.
 7. **Intégrer l'asset retenu** : réduire au format du jeu (décors 960×540, voir `public/assets/areas/`), le placer dans `public/assets/…`, garder l'original dans `assets-src/`, adapter les collisions/sorties de la zone si le décor change, puis vérifier `npm run build`. Les essais restent dans `public/assets/generated/` (ignoré par git).
 8. **Garder le définitif sur GitHub** : commit des assets intégrés (`public/assets/…`, `assets-src/…`).
 9. **Registre des dépenses** : après toute utilisation du pipeline, commite et pousse `tools/images/ledger/ledger.jsonl` (même s'il n'y a eu que des refus ou inventaires), avec les assets. Sans cela, les compteurs sont perdus à la recréation de l'environnement.
