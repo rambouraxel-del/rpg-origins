@@ -22,6 +22,8 @@ export interface Cond {
   party?: string[];
   chapterMin?: number;
   chapterMax?: number;
+  /** Confiance minimale (0 à 5) d'un compagnon. */
+  trustMin?: Record<string, number>;
   quests?: Record<string, QuestState | QuestState[]>;
   any?: Cond[];
 }
@@ -43,6 +45,7 @@ export type Effect =
   | { op: 'money'; delta: number }
   | { op: 'discover'; loc: string }
   | { op: 'maxStats'; hp?: number; energy?: number; points?: number }
+  | { op: 'removePower'; id: string }
   | { op: 'equip'; id: string }
   | { op: 'consumable'; id: string; qty: number };
 
@@ -120,6 +123,8 @@ export interface SceneDef {
   steps: Step[];
   onComplete?: Effect[];
   next?: string | null;
+  /** Vrai : la scène démarre d'elle-même après la précédente, même dans un autre lieu (fins, ellipses). */
+  auto?: boolean;
   /** Texte de transition affiché avant la scène suivante. */
   summary?: string;
 }

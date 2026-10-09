@@ -1,4 +1,16 @@
-# Décisions
-- D1 (2026-10-09) : branche orpheline via `git worktree add --orphan` (Git 2.43) ; nom autorisé par le prompt de mission.
-- D2 : le registre `tools/images/ledger/ledger.jsonl` est la source financière unique ; `IMAGE_BUDGET.json` ne contient que les plafonds.
-- D3 : Phaser/Vite/TS versions du `package.json` importé conservées (Phaser ^4.2.1).
+# Décisions et ajustements (avec raisons)
+
+- **D1** Branche orpheline via `git worktree add --orphan` (Git 2.43), nom imposé par la mission ; ancien dépôt gardé en référence (`/home/user/rpg-origins`, branche `claude/new-session-8dqfpo`), rien n'y est modifié.
+- **D2** Source financière unique : `tools/images/ledger/ledger.jsonl` (réservations, règlements, revues, inventaires). `production/IMAGE_BUDGET.json` ne contient que les plafonds ; `production/IMAGE_REQUESTS.jsonl` n'existe pas (le registre en tient lieu — « pas deux totaux divergents »).
+- **D3** Harnais adapté à la règle du cahier : plafond cumulé de 15 € (12 € planifiés + 3 € de protection compris), conversion bornée 1 $ = 1 € avec frais x1,1, réservations comptées, une image par appel (la CLI refuse `n > 1`), **commit + push du registre avant l'envoi** (échec = pas d'appel, réservation libérée). Tests : `npm run test:images` (36 tests, serveur factice).
+- **D4** Les coûts affichés sont « calculés depuis les tokens » (pas la facture OpenAI). Les prix par token sont ceux fournis par l'utilisateur (non recoupés : page inaccessible depuis l'environnement) ; le harnais les majore (x2 sur les tokens) pour la réservation.
+- **D5** Contenu 100 % en données : scènes (`src/data/scenes`), quêtes, lieux, objets. Étapes et effets d'une liste fermée ; pas de code dans les données. Les scènes cités de la bible sont transcrites avec leurs dialogues cités ; les passages descriptifs sont rendus par narration courte, interactions et énigmes.
+- **D6** Les 27 lieux sont jouables avec des décors générés (un par lieu) ; les variantes de lumière/occupation passent par teinte et acteurs, pas par de nouvelles images (cahier §14.3).
+- **D7** Personnages : une vue de face par personnage (planches de 4 découpées par code, normalisées à 168 px), affichée à ~66 px ; miroir pour la gauche/droite. Le héros garde ses 8 vues extraites de la planche de référence. Compagnons non animés par images : oscillation de marche par code. Portraits de dialogue : haut de la silhouette, sans image supplémentaire.
+- **D8** Énigmes en 4 mécanismes génériques (choisir un, choisir un ensemble, répartir un débit, ordonner), aides en 3 niveaux, erreurs sans sanction (règles §12).
+- **D9** Combat : règles §5 (attaque, esquive, 2 pouvoirs, intervention de soutien, soin, pause de réflexion Tab qui suspend toute la simulation). Les humains sont désarmés (« Désarmé »), les machines détruites. Valeurs centralisées dans `src/data/balance.ts`.
+- **D10** Audio entièrement synthétisé (WebAudio) : aucune licence externe, donc aucun crédit audio à fournir.
+- **D11** Avant C06S02 l'interface remplace « Elyan » par « l'Étranger » (« le prince » au prologue) dans tout texte affiché ; les données gardent le vrai nom.
+- **D12** Sorties inactives pendant une scène ou une étape de quête (évite de quitter un lieu en plein récit) ; une scène marquée `auto` (fins A03, B02, B03) démarre d'elle-même après la précédente.
+- **D13** Sauvegardes : 3 emplacements manuels + automatique + seuil (créée à la fin de C09S04, donc avant C09S05), export/import JSON avec somme de contrôle ; un import refusé ne touche à aucun emplacement. Après une fin, la partie n'est pas écrasée : menu « recharger le seuil / nouvelle partie / titre ».
+- **D14** Limites assumées : touches non reconfigurables (ZQSD, WASD et flèches actifs ensemble ; l'option est notée dans `docs/LANCEMENT.md`) ; pas de manette (extension prévue après validation clavier/souris) ; musique générative simple ; un seul décor par lieu avec teintes.

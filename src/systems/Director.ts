@@ -176,6 +176,7 @@ export class Director {
     const saves = (def.onComplete ?? []).filter((e) => e.op === 'save');
     applyEffects(s, (def.onComplete ?? []).filter((e) => e.op !== 'save'), `scene:${def.id}`);
     completeScene(s, def.id);
+    if (def.id === 'C09S05') this.leaveOpenQuests();
     this.refreshQuests();
     this.activeScene = null;
     s.currentScene = null;
@@ -193,7 +194,7 @@ export class Director {
     if (def.summary) hub.ui.toast(def.summary);
     const nxtId = this.pending;
     const nxt = nxtId ? hub.scenes.get(nxtId) : undefined;
-    if (nxt && nxt.loc === this.world.loc.id && evalCond(s, nxt.requires)) void this.runScene(nxt.id, 0);
+    if (nxt && (nxt.auto || nxt.loc === this.world.loc.id) && evalCond(s, nxt.requires)) void this.runScene(nxt.id, 0);
     else this.showObjectiveForPending();
   }
 
@@ -340,12 +341,14 @@ export class Director {
       case 'end': {
         s.flags.ending = step.ending;
         s.flags._ended = true;
-        saveTo('auto');
+        completeScene(s, sceneId);
         await ui.fade(true, 800);
         await ui.epilogue(step.ending);
         await ui.credits(step.ending);
-        hub.events.emit('return-title');
-        // on laisse l'appelant gérer le retour ; la scène ne se termine pas
+        const next = await ui.endMenu();
+        s.flags._endChoice = next;
+        hub.events.emit(next === 'threshold' ? 'load-threshold' : next === 'new' ? 'new-game' : 'return-title');
+        // la partie terminée n'est pas sauvegardée : la scène ne se termine pas
         await new Promise<void>(() => undefined);
         break;
       }

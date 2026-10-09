@@ -165,6 +165,7 @@ export class Menus {
     this.txt(x + 24, yy + 4, 'Pouvoirs : ' + (s.powers.length ? s.powers.map((p) => POWERS[p].name).join(', ') : 'aucun'), 15, COL.text, 400);
     yy += 56;
     this.btn(x + 24, yy, 260, 34, `Améliorations (${s.hero.points} pt)`, () => this.go('points'), 15);
+    if (s.party.length) this.btn(x + 24, yy + 42, 330, 34, `Soutien de combat : ${s.support ? nameOf(s.support) : '—'} (changer)`, () => { const i = s.party.indexOf(s.support as CompanionId); s.support = s.party[(i + 1) % s.party.length]; this.rebuild(); }, 14);
     // objets
     this.txt(x + 450, y + 90, 'Objets', 17, COL.gold);
     const names = s.items.map((i) => NARRATIVE[i]?.name ?? i);
@@ -279,7 +280,7 @@ export class Menus {
   }
 
   private restPanel(): void {
-    const { x, y } = this.frame('Le puits', 520, 420);
+    const { x, y } = this.frame('Le puits', 520, 440);
     const s = hub.state;
     this.txt(x + 30, y + 52, 'Une eau claire. On peut demander ; on ne peut pas appeler son besoin une permission.', 14, COL.dim, 460);
     this.btn(x + 40, y + 100, 440, 42, 'Se reposer : soigne la vie et l\'énergie', () => {
@@ -289,6 +290,10 @@ export class Menus {
     });
     this.btn(x + 40, y + 152, 440, 42, 'Sauvegarder (emplacement automatique + choix)', () => { saveTo('auto'); this.go('saves'); this.kind = 'saves'; });
     this.btn(x + 40, y + 204, 440, 42, `Répartir les améliorations (${s.hero.points} pt)`, () => this.go('points'));
+    this.btn(x + 40, y + 308, 440, 42, `Acheter un soin (6 pièces) — vous avez ${s.money} pièces, ${s.consumables.soin ?? 0}/5 soins`, () => {
+      if (s.money >= 6 && (s.consumables.soin ?? 0) < 5) { applyEffects(s, [{ op: 'money', delta: -6 }, { op: 'consumable', id: 'soin', qty: 1 }]); hub.ui.toast('Un soin acheté.'); this.rebuild(); }
+      else hub.ui.toast(s.money < 6 ? 'Pas assez de pièces : le puits reste gratuit.' : 'Vous portez déjà 5 soins.');
+    }, 14);
     const comp = s.party.filter(() => evalCond(s, undefined));
     this.btn(x + 40, y + 256, 440, 42, comp.length ? `Parler à un compagnon (${comp.map(nameOf).join(', ')})` : 'Parler (personne ici)', () => {
       if (!comp.length) return;

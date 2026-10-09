@@ -39,7 +39,7 @@ export const STELLAR = [
     walk: [R(40, 130, 900, 380)],
     blocks: [R(220, 230, 170, 100), R(260, 380, 170, 120), R(420, 350, 190, 110), R(510, 260, 220, 120), R(720, 320, 120, 110), R(150, 450, 200, 80), R(740, 100, 200, 150), R(0, 270, 200, 140)],
     anchors: { start: P(880, 440), default: P(880, 440), entree: P(880, 440), ronde_a1: P(400, 170), ronde_a2: P(400, 300), ronde_b1: P(660, 170), ronde_b2: P(660, 420) },
-    features: { registre_zone: R(440, 110, 120, 70), etiquettes: R(220, 230, 170, 100), liste_sites: R(740, 100, 200, 150) },
+    features: { registre_zone: R(430, 165, 140, 60), etiquettes: R(220, 230, 170, 100), liste_sites: R(740, 100, 200, 150) },
     exits: [{ side: 'right', at: 440, to: 'stellar_dock' }, { side: 'up', at: 500, to: 'archive_core' }],
   }),
   loc({

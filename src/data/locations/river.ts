@@ -7,7 +7,7 @@ export const RIVER = [
     walk: [R(120, 0, 160, 140), R(170, 120, 380, 230), R(400, 230, 520, 130), R(470, 350, 170, 160), R(780, 150, 170, 100)],
     blocks: [R(130, 160, 150, 180), R(470, 175, 230, 115)],
     anchors: { start: P(350, 270), meunier_spot: P(330, 305), pecheur1: P(250, 345), pecheur2: P(480, 320), soldat_spot: P(450, 205), gardien_spot: P(740, 262), ilan_spot: P(620, 330) },
-    features: { cloture: R(460, 170, 250, 130), bassin: R(500, 190, 170, 90), moulin: R(0, 100, 290, 260), attache_zone: R(330, 300, 100, 60), canal_habitations: R(550, 40, 100, 140), canal_relais: R(665, 40, 100, 140), canal_decharge: R(770, 60, 90, 120), exit_relay: R(830, 110, 130, 90) },
+    features: { cloture: R(460, 170, 250, 130), bassin: R(500, 190, 170, 90), moulin: R(0, 100, 230, 260), attache_zone: R(330, 300, 100, 60), canal_habitations: R(550, 40, 100, 140), canal_relais: R(665, 40, 100, 140), canal_decharge: R(760, 60, 75, 120), exit_relay: R(830, 110, 130, 90) },
     exits: [{ side: 'up', at: 300, to: 'lisiere_square' }, { side: 'right', at: 260, to: 'miral_gate' }, { side: 'up', at: 900, to: 'river_relay' }],
   }),
   loc({

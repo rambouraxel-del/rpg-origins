@@ -9,6 +9,8 @@ import { registerContent } from './data';
 import { initSaves, loadFrom, freshGame } from './systems/Saves';
 import * as saveApi from './core/save';
 import { applyEffects } from './core/state';
+import { buildEpilogue } from './data/epilogues';
+import { audio } from './systems/Audio';
 
 const params = new URLSearchParams(location.search);
 hub.devMode = params.has('dev');
@@ -70,6 +72,8 @@ hub.events.on('title-choice', (mode: string) => {
   }
 });
 hub.events.on('load-game', () => { void enterGame('load'); });
+hub.events.on('load-threshold', () => { if (loadFrom('threshold')) void enterGame('load'); else game.scene.start('Title'); });
+hub.events.on('new-game', () => { freshGame(); void enterGame('new'); });
 hub.events.on('reload-last', () => { if (loadFrom('auto')) void enterGame('load'); });
 hub.events.on('return-title', () => {
   hub.world?.director.abort();
@@ -81,5 +85,7 @@ hub.events.on('return-title', () => {
 
 (window as unknown as { __save: typeof saveApi; __fx: typeof applyEffects }).__save = saveApi;
 (window as unknown as { __fx: typeof applyEffects }).__fx = applyEffects;
+(window as unknown as { __audio: typeof audio }).__audio = audio;
+(window as unknown as { __epilogue: () => string[] }).__epilogue = () => buildEpilogue(hub.state, hub.state.flags.final_route as 'A' | 'B');
 (window as unknown as { __hub: typeof hub; __game: Phaser.Game }).__hub = hub;
 (window as unknown as { __game: Phaser.Game }).__game = game;

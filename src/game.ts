@@ -44,6 +44,7 @@ export interface UiApi {
   pauseOverlay(on: boolean): void;
   gameOver(): Promise<'retry' | 'load'>;
   credits(ending: 'A' | 'B'): Promise<void>;
+  endMenu(): Promise<'threshold' | 'new' | 'title'>;
   epilogue(ending: 'A' | 'B'): Promise<void>;
 }
 

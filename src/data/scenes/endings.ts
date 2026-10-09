@@ -60,6 +60,7 @@ export const ENDINGS = [
     next: 'A03',
   }),
   scene({
+    auto: true,
     id: 'A03', chapter: 10, title: 'Une année de vie', loc: 'lisiere_square', spawn: 'default', party: ['nara', 'soren', 'tessa'],
     steps: [
       fx('title', 2600, 'Un an plus tard'),
@@ -97,10 +98,11 @@ export const ENDINGS = [
         opt('Laisser Vaelor décider.', { set: setv('b_mercy', 'abandon'), lines: [N('Nara et Tessa meurent lors de leur résistance aux gardes après l\'arrestation ; Soren est conservé pour traduire les archives puis emprisonné. Le bilan le dit sans image gore.')] }),
       ]),
     ],
-    onComplete: [F('crown_closed'), F('eira_free', false), { op: 'party', remove: 'nara' }, { op: 'party', remove: 'soren' }, { op: 'party', remove: 'tessa' }],
+    onComplete: [F('crown_closed'), F('eira_free', false), { op: 'removePower', id: 'bond' }, { op: 'party', remove: 'nara' }, { op: 'party', remove: 'soren' }, { op: 'party', remove: 'tessa' }],
     next: 'B02',
   }),
   scene({
+    auto: true,
     id: 'B02', chapter: 10, title: 'Une victoire sans chanson', loc: 'stellar_command', spawn: 'default', party: [],
     actors: [at('vaelor', 'vaelor_spot', 'down')],
     steps: [
@@ -116,6 +118,7 @@ export const ENDINGS = [
     next: 'B03',
   }),
   scene({
+    auto: true,
     id: 'B03', chapter: 10, title: 'Le jardin réparé', loc: 'palace_hall', spawn: 'default', party: [],
     actors: [at('mira', 'mira_spot', 'down'), at('adrien', 'adrien_spot', 'left')],
     steps: [

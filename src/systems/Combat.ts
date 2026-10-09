@@ -8,6 +8,7 @@ import type { CompanionId, EnemySpawn, EnemyType, Pt } from '../core/types';
 import type { WorldScene } from '../scenes/WorldScene';
 import { POWERS } from '../data/powers';
 import { audio } from './Audio';
+import { heroMods } from './Mods';
 
 interface Enemy {
   type: EnemyType;
@@ -172,7 +173,7 @@ export class Combat {
   private damageHero(n: number): void {
     const s = hub.state;
     if (this.invuln > 0 || this.bondT > 0) return;
-    const f = s.difficulty === 'histoire' ? BALANCE.histoireDamageFactor : 1;
+    const f = (s.difficulty === 'histoire' ? BALANCE.histoireDamageFactor : 1) * (1 - heroMods().def);
     s.hero.hp = Math.max(0, s.hero.hp - Math.round(n * f));
     this.invuln = 0.5;
     audio.hurt();
@@ -198,7 +199,7 @@ export class Combat {
       const d = Math.hypot(ex, ey);
       if (d > 62) continue;
       if ((ex * ux + ey * uy) / (d || 1) < 0.35) continue;
-      this.hit(e, BALANCE.hero.strike, { x: ux, y: uy });
+      this.hit(e, BALANCE.hero.strike + heroMods().strike, { x: ux, y: uy });
     }
     this.idleSince = 0;
   }
@@ -240,7 +241,7 @@ export class Combat {
     this.dodgeDir = move.x || move.y ? move : f;
     audio.dodge();
     this.dodgeT = BALANCE.hero.dodgeTime;
-    this.dodgeCd = BALANCE.hero.dodgeCooldown * (hub.state.hero.spent.dodge ? 0.9 : 1);
+    this.dodgeCd = BALANCE.hero.dodgeCooldown * (1 - heroMods().dodge);
     this.invuln = Math.max(this.invuln, BALANCE.hero.dodgeTime + 0.08);
   }
 
@@ -262,15 +263,15 @@ export class Combat {
     if ((s.consumables.soin ?? 0) <= 0 || s.hero.hp >= s.hero.maxHp) { hub.ui.toast('Aucun soin utile.'); return; }
     audio.heal();
     s.consumables.soin--;
-    s.hero.hp = Math.min(s.hero.maxHp, s.hero.hp + BALANCE.hero.healItem);
-    this.pop(this.w.player.x, this.w.player.y - 70, `+${BALANCE.hero.healItem}`, 0x8aff9a);
+    s.hero.hp = Math.min(s.hero.maxHp, s.hero.hp + Math.round(BALANCE.hero.healItem * (1 + heroMods().heal)));
+    this.pop(this.w.player.x, this.w.player.y - 70, `+${Math.round(BALANCE.hero.healItem * (1 + heroMods().heal))}`, 0x8aff9a);
   }
 
   private useVeil(): void {
     const s = hub.state;
     if (!s.powers.includes('veil') || s.hero.energy < BALANCE.veil.cost || this.veilT > 0 || hub.locked) return;
     s.hero.energy -= BALANCE.veil.cost;
-    this.veilT = BALANCE.veil.duration * (s.hero.spent.veil ? 1.15 : 1);
+    this.veilT = BALANCE.veil.duration * (1 + heroMods().veil);
     hub.ui.toast('Voile : vous êtes moins visible.');
   }
 
@@ -289,7 +290,7 @@ export class Combat {
       case 'pulse': {
         const t = near(190).sort((a, b) => Math.hypot(a.actor.x - tx, a.actor.y - ty) - Math.hypot(b.actor.x - tx, b.actor.y - ty))[0];
         if (!t) { hub.ui.toast('Aucune cible à portée de l\'Onde.'); used = false; break; }
-        t.state = 'stun'; t.t = 2.2; t.vuln = 2.4;
+        t.state = 'stun'; t.t = 2.2 * (1 + heroMods().pulse); t.vuln = 2.4;
         if (t.type === 'pompage') t.shield = false;
         this.ring(t.actor.x, t.actor.y - 30, 0x9fe8ff);
         break;
@@ -298,8 +299,8 @@ export class Combat {
         const supports = this.w.loc.hotspots?.filter((h) => /appui|support|racine|poutre/i.test(h.id + h.label)) ?? [];
         const t = near(220).find((e) => supports.some((h) => { const r = this.w.hotRect(h); return Math.hypot(e.actor.x - (r.x + r.w / 2), e.actor.y - (r.y + r.h / 2)) < 170; }));
         if (!t) { hub.ui.toast('Aucun appui compatible près des cibles.'); used = false; break; }
-        for (const e of near(120)) e.rooted = 2.8;
-        t.rooted = 2.8; this.ring(t.actor.x, t.actor.y, 0x8aff7a);
+        for (const e of near(120)) e.rooted = 2.8 * (1 + heroMods().weave);
+        t.rooted = 2.8 * (1 + heroMods().weave); this.ring(t.actor.x, t.actor.y, 0x8aff7a);
         break;
       }
       case 'flow': {
@@ -310,11 +311,11 @@ export class Combat {
       case 'veil': { this.veilT = BALANCE.veil.duration; for (const e of this.enemies) { e.blind = 3; if (e.state === 'windup') { e.state = 'idle'; e.t = 1.2; } } this.ring(p.x, p.y, 0xc9a0ff); break; }
       case 'listen': { const t = near(280)[0]; if (t) { t.marked = true; this.ring(t.actor.x, t.actor.y - 30, 0xfff0a0); this.pop(t.actor.x, t.actor.y - 70, 'Point faible', 0xfff0a0); } else used = false; break; }
       case 'echo': { this.slowT = 0; for (const e of this.enemies) e.vuln = Math.max(e.vuln, 3); this.ring(p.x, p.y, 0xffc0ff); hub.ui.toast('Rémanence : les fenêtres de frappe sont visibles.'); break; }
-      case 'bond': { this.bondT = 3 * (s.hero.spent.bond ? 1.2 : 1); this.ring(p.x, p.y, 0xffe08a); break; }
+      case 'bond': { this.bondT = 3 * (1 + heroMods().bond); this.ring(p.x, p.y, 0xffe08a); break; }
     }
     if (!used) return;
     audio.power();
-    s.hero.energy -= P.cost * (s.hero.spent.cost ? 0.9 : 1);
+    s.hero.energy -= P.cost * (1 - heroMods().cost);
     this.cd[cdKey] = P.cooldown;
     this.idleSince = 0;
   }
@@ -328,7 +329,7 @@ export class Combat {
     this.supportUsed = true;
     this.supportActive = { who, t: 4 };
     if (who === 'nara') for (const e of this.enemies) { e.decoy = true; if (e.state === 'windup') { e.state = 'idle'; e.t = 1.5; } }
-    if (who === 'soren') for (const e of this.enemies) e.vuln = 4;
+    if (who === 'soren') for (const e of this.enemies) e.vuln = 4 * (1 + heroMods().support);
     if (who === 'tessa') for (const e of machines) { e.shield = false; e.state = 'stun'; e.t = 3; }
     this.pop(this.w.player.x, this.w.player.y - 80, `${who === 'nara' ? 'Nara' : who === 'soren' ? 'Soren' : 'Tessa'} intervient`, 0xfff0a0);
   }

@@ -10,6 +10,7 @@ import { runPuzzle } from '../ui/puzzle';
 import { showFinalChoice, showEpilogue, showCredits } from '../ui/ending';
 import { POWERS } from '../data/powers';
 import { audio } from '../systems/Audio';
+import { slotInfo } from '../core/save';
 
 /** Avant C06S02 l'interface ne dit jamais « Elyan » (bible §4.1) : le nom reste dans les données, le texte affiché le remplace. */
 export function scrubName(t: string): string {
@@ -39,6 +40,8 @@ export class UIScene extends Phaser.Scene implements UiApi {
   private dlgText!: Phaser.GameObjects.Text;
   private dlgNameBg!: Phaser.GameObjects.Graphics;
   private dlgMore!: Phaser.GameObjects.Text;
+  private dlgPortrait?: Phaser.GameObjects.Image;
+  private dlgPortraitFrame!: Phaser.GameObjects.Graphics;
   private hudGroup: Phaser.GameObjects.GameObject[] = [];
   private combatGroup?: Phaser.GameObjects.Container;
   private combatTxt?: Phaser.GameObjects.Text;
@@ -82,7 +85,8 @@ export class UIScene extends Phaser.Scene implements UiApi {
     this.dlgName = text(this, 40, -17, '', 18, COL.gold).setOrigin(0, 0.5);
     this.dlgText = text(this, 24, 18, '', 18, COL.text, 872);
     this.dlgMore = text(this, 892, 126, '▼', 16, COL.gold);
-    this.dlg = this.add.container(20, 378, [dbg, this.dlgNameBg, this.dlgName, this.dlgText, this.dlgMore]).setDepth(D + 10).setVisible(false);
+    this.dlgPortraitFrame = this.add.graphics();
+    this.dlg = this.add.container(20, 378, [dbg, this.dlgPortraitFrame, this.dlgNameBg, this.dlgName, this.dlgText, this.dlgMore]).setDepth(D + 10).setVisible(false);
     // entrées
     const kb = this.input.keyboard!;
     const adv = () => { audio.start(); this.advance(); };
@@ -202,6 +206,7 @@ export class UIScene extends Phaser.Scene implements UiApi {
           this.dlgNameBg.fillStyle(COL.panel, 1).fillRoundedRect(24, -35, this.dlgName.width + 32, 34, 8).lineStyle(2, COL.edge, 0.9).strokeRoundedRect(24, -35, this.dlgName.width + 32, 34, 8);
         }
         this.dlgText.setStyle({ fontStyle: ln.narr ? 'italic' : 'normal', color: ln.narr ? COL.dim : COL.text, fontSize: fs(18) });
+        this.showPortrait(ln.narr ? null : ln.who);
         this.dlgMore.setVisible(false);
         this.dlgText.setText('');
         hub.state.seenLines.push(`${who ? who + ' : ' : ''}${ln.text}`);
@@ -220,10 +225,29 @@ export class UIScene extends Phaser.Scene implements UiApi {
         await new Promise<void>((r) => { this.advanceWaiter = r; });
       }
       this.dlg.setVisible(false);
+      this.showPortrait(null);
       hub.unlock();
     });
     this.chain = job.catch(() => undefined);
     return job;
+  }
+
+  /** Portrait de dialogue : le haut de la silhouette de face du personnage (découpé à l'affichage, aucune image supplémentaire). */
+  private showPortrait(who: string | null): void {
+    this.dlgPortrait?.destroy(); this.dlgPortrait = undefined; this.dlgPortraitFrame.clear();
+    const key = who ? (who === 'elyan' ? 'hero9' : `c:${who}`) : null;
+    if (!who || !key || !this.textures.exists(key) || who === 'eira') { this.dlgText.setX(24).setWordWrapWidth(872); return; }
+    const img = this.add.image(0, 0, key, who === 'elyan' ? 0 : undefined);
+    const fw = img.width, fh = img.height;
+    const cropH = who === 'elyan' ? fh * 0.52 : fh * 0.34;
+    img.setOrigin(0.5, 0);
+    (img as unknown as { setCrop(x: number, y: number, w: number, h: number): void }).setCrop(0, 0, fw, cropH);
+    const sc = 96 / Math.max(fw * 0.8, cropH);
+    img.setScale(sc).setPosition(62, 28 + (96 - cropH * sc) / 2 - 8);
+    this.dlgPortraitFrame.fillStyle(0x1d2a3a, 1).fillRoundedRect(14, 20, 96, 96, 10).lineStyle(2, COL.edge, 0.9).strokeRoundedRect(14, 20, 96, 96, 10);
+    this.dlg.add(img); this.dlg.bringToTop(img);
+    this.dlgPortrait = img;
+    this.dlgText.setX(124).setWordWrapWidth(772);
   }
 
   choose(prompt: string | undefined, labels: string[]): Promise<number> {
@@ -278,6 +302,21 @@ export class UIScene extends Phaser.Scene implements UiApi {
   finalChoice(): Promise<'A' | 'B'> { return showFinalChoice(this); }
   epilogue(e: 'A' | 'B'): Promise<void> { return showEpilogue(this, e); }
   credits(e: 'A' | 'B'): Promise<void> { return showCredits(this, e); }
+  endMenu(): Promise<'threshold' | 'new' | 'title'> {
+    return new Promise((resolve) => {
+      const D = DEPTH.ui + 110;
+      const objs: { destroy(): void }[] = [];
+      objs.push(this.add.rectangle(0, 0, GAME_W, GAME_H, 0x03060a, 1).setOrigin(0, 0).setDepth(D).setInteractive());
+      objs.push(text(this, 480, 130, 'Merci d\'avoir joué', 38, COL.gold).setOrigin(0.5).setDepth(D + 1));
+      objs.push(text(this, 480, 185, 'Pour voir l\'autre fin, rechargez la sauvegarde du seuil : ce n\'est pas un événement du récit.', 16, COL.dim, 700).setOrigin(0.5, 0).setAlign('center').setDepth(D + 1));
+      const fin = (v: 'threshold' | 'new' | 'title') => { for (const o of objs) o.destroy(); resolve(v); };
+      const hasThreshold = !slotInfo('threshold').empty;
+      const b1 = button(this, 290, 260, 380, 48, 'Recharger la sauvegarde du seuil', () => fin('threshold')); b1.setEnabled(hasThreshold);
+      const b2 = button(this, 290, 322, 380, 48, 'Nouvelle partie', () => fin('new'));
+      const b3 = button(this, 290, 384, 380, 48, 'Retour au titre', () => fin('title'));
+      for (const b of [b1, b2, b3]) { b.box.setDepth(D + 1); b.label.setDepth(D + 2); objs.push(b); }
+    });
+  }
   restMenu(): Promise<void> { return this.menus.rest(); }
   openMenu(kind: 'pause' | 'journal' | 'inventory' | 'map'): void { this.menus.toggle(kind); }
 

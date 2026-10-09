@@ -20,7 +20,7 @@ export const QUESTS: QuestScript[] = [
         say([L('darel', 'Aider plus vite ne sert pas longtemps si l\'on abîme ce qui aide.')]),
       ],
     }],
-    rewards: [F('q01_done'), equip('gilet_cuir'), soin(1)], done: 'Le dispensaire fonctionne. Darel vous remercie.',
+    rewards: [{ op: 'money', delta: 6 }, F('q01_done'), equip('gilet_cuir'), soin(1)], done: 'Le dispensaire fonctionne. Darel vous remercie.',
   },
   {
     id: 'q02', title: 'Le dessin de Lume', where: 'Lisière et forêt d\'arrivée', giver: 'Lume', summary: 'Lume voudrait dessiner le bassin où Nara a trouvé l\'Étranger.',
@@ -38,7 +38,7 @@ export const QUESTS: QuestScript[] = [
         ],
       },
     ],
-    rewards: [F('q02_done'), item('lume_drawing'), soin(1)], done: 'Lume garde l\'original ; vous gardez une copie.',
+    rewards: [{ op: 'money', delta: 6 }, F('q02_done'), item('lume_drawing'), soin(1)], done: 'Lume garde l\'original ; vous gardez une copie.',
   },
   {
     id: 'q03', title: 'Les graines qui attendent', where: 'Sanctuaire des racines', giver: 'Méline', summary: 'Des graines destinées à Miral sont tombées dans une zone devenue sèche.',
@@ -60,7 +60,7 @@ export const QUESTS: QuestScript[] = [
         ],
       },
     ],
-    rewards: [F('q03_done'), equip('graine_chance')], done: 'Les plantes sont réparties entre deux décors sans priver un lieu de nourriture.',
+    rewards: [{ op: 'money', delta: 6 }, F('q03_done'), equip('graine_chance')], done: 'Les plantes sont réparties entre deux décors sans priver un lieu de nourriture.',
   },
   {
     id: 'q04', title: 'Le sentier de son père', where: 'Forêt, avec Nara', giver: 'Nara', summary: 'Nara veut retrouver une balise laissée par son père.',
@@ -80,7 +80,7 @@ export const QUESTS: QuestScript[] = [
         say([L('nara', 'J\'ai passé des années à imaginer le bon geste avant de comprendre que je n\'étais pas dans cette montagne.')]),
       ],
     }],
-    rewards: [F('q04_done'), trust('nara', 1), equip('lame_veilleur')], done: 'Une balise à son nom est remise en place.',
+    rewards: [{ op: 'money', delta: 6 }, F('q04_done'), trust('nara', 1), equip('lame_veilleur')], done: 'Une balise à son nom est remise en place.',
   },
   {
     id: 'q05', title: 'La roue du meunier', where: 'Rivière', giver: 'Le meunier', summary: 'Le courant est revenu, mais la roue reste bloquée.',
@@ -95,7 +95,7 @@ export const QUESTS: QuestScript[] = [
         say([N('L\'Accord des eaux réduit temporairement le débit pendant que les deux hommes retirent la pierre.'), L('meunier', 'Votre machine a pris notre eau. Cette pièce-là, elle n\'y était pour rien. Je peux dire les deux.'), N('Le gardien accepte de travailler contre un salaire et non comme une dette imposée.')]),
       ],
     }],
-    rewards: [F('q05_done'), equip('tenue_legere'), soin(1)], done: 'Le moulin tourne. Un civil stellaire s\'installe.',
+    rewards: [{ op: 'money', delta: 6 }, F('q05_done'), equip('tenue_legere'), soin(1)], done: 'Le moulin tourne. Un civil stellaire s\'installe.',
   },
   {
     id: 'q06', title: 'Le nom d\'Ilan', where: 'Lisière', giver: 'Ilan', summary: 'Ilan veut réparer l\'insigne de messager brisé pendant sa détention.',
@@ -111,7 +111,7 @@ export const QUESTS: QuestScript[] = [
         ],
       },
     ],
-    rewards: [F('q06_done'), equip('insigne_ilan')], done: 'Ilan porte l\'insigne à Orme.',
+    rewards: [{ op: 'money', delta: 6 }, F('q06_done'), equip('insigne_ilan')], done: 'Ilan porte l\'insigne à Orme.',
   },
   {
     id: 'q07', title: 'Les deux versions de la crue', where: 'Archives et jardin de Miral', giver: 'Soren', summary: 'Soren veut vérifier un ancien récit de crue.',
@@ -127,7 +127,7 @@ export const QUESTS: QuestScript[] = [
         say([L('soren', 'Je cherchais qui avait raison. Je n\'avais pas encore demandé quand.')]),
       ],
     }],
-    rewards: [F('q07_done'), trust('soren', 1), equip('pierre_ecoute')], done: 'Soren rédige une note qui conserve les deux faits.',
+    rewards: [{ op: 'money', delta: 6 }, F('q07_done'), trust('soren', 1), equip('pierre_ecoute')], done: 'Soren rédige une note qui conserve les deux faits.',
   },
   {
     id: 'q08', title: 'Une chaise pour l\'absent', where: 'Jardin de mémoire', giver: 'Méline', summary: 'Une famille hésite à graver le nom d\'un artisan disparu.',
@@ -140,7 +140,7 @@ export const QUESTS: QuestScript[] = [
         say([L('meline', 'Une place peut attendre. Une histoire ne doit pas mentir pour la remplir.')]),
       ] },
     ],
-    rewards: [F('q08_done'), equip('cordon_pierre')], done: 'Le banc porte la marque d\'attente.',
+    rewards: [{ op: 'money', delta: 6 }, F('q08_done'), equip('cordon_pierre')], done: 'Le banc porte la marque d\'attente.',
   },
   {
     id: 'q09', title: 'Un repas pour deux cuisines', where: 'Miral', giver: 'Une cuisinière et une réfugiée', summary: 'Une recette stellaire exige une chaleur continue que le puits ne peut donner.',
@@ -154,7 +154,7 @@ export const QUESTS: QuestScript[] = [
         say([N('Le repas est imparfait : la texture diffère et la réfugiée reconnaît ce qu\'elle regrette.'), L('refugiee', 'Ce n\'est pas celui de chez moi.'), L('cuisiniere', 'On peut lui donner un autre nom sans dire que tu as oublié l\'ancien.')]),
       ] },
     ],
-    rewards: [F('q09_done'), equip('manteau_epais'), soin(1)], done: 'Les gens partagent néanmoins le pain.',
+    rewards: [{ op: 'money', delta: 6 }, F('q09_done'), equip('manteau_epais'), soin(1)], done: 'Les gens partagent néanmoins le pain.',
   },
   {
     id: 'q10', title: 'Les lettres de l\'Aube Basse', where: 'Station', giver: 'Tessa', summary: 'Des lettres ont été retenues parce que le transport prioritaire appartient au chantier.',
@@ -169,7 +169,7 @@ export const QUESTS: QuestScript[] = [
         say([N('Une lettre de sa mère arrive après un changement de scène. Elle décrit une panne et une voisine qui partage ses filtres.'), L('tessa', 'Il y a des gens là-haut qui n\'ont jamais demandé qu\'on mette un genou sur la terre d\'ici.')]),
       ],
     }],
-    rewards: [F('q10_done'), item('witness_letters'), equip('cuirasse_stellaire')], done: 'Les lettres sont parties.',
+    rewards: [{ op: 'money', delta: 6 }, F('q10_done'), item('witness_letters'), equip('cuirasse_stellaire')], done: 'Les lettres sont parties.',
   },
   {
     id: 'q11', title: 'Un relevé sans correction', where: 'Laboratoire', giver: 'Un technicien', summary: 'Un technicien a signalé une fluctuation qu\'on lui a demandé de retirer du rapport.',
@@ -185,7 +185,7 @@ export const QUESTS: QuestScript[] = [
         say([L('technicien', 'Je voulais qu\'on me croie. Ensuite j\'ai seulement voulu que mon nom disparaisse de la ligne.')]),
       ],
     }],
-    rewards: [F('q11_done'), F('ilyra_early_doubt'), equip('amulette_eau')], done: 'Le relevé brut est conservé.',
+    rewards: [{ op: 'money', delta: 6 }, F('q11_done'), F('ilyra_early_doubt'), equip('amulette_eau')], done: 'Le relevé brut est conservé.',
   },
   {
     id: 'q12', title: 'Les objets sans propriétaire', where: 'Abri d\'Orme puis Miral', giver: 'Soren', summary: 'Des objets ramassés sur les routes : leurs propriétaires les cherchent peut-être.',
@@ -201,6 +201,6 @@ export const QUESTS: QuestScript[] = [
         choice('Votre ruban :', [opt('Le laisser dans ce registre, comme objet confié (confirmé avant le départ final).', { set: setv('q12_ribbon', 'registry') }), opt('Le garder.', { set: setv('q12_ribbon', 'keep') })]),
       ] },
     ],
-    rewards: [F('q12_done'), equip('lance_racine')], done: 'Le registre de restitution est ouvert.',
+    rewards: [{ op: 'money', delta: 6 }, F('q12_done'), equip('lance_racine')], done: 'Le registre de restitution est ouvert.',
   },
 ];

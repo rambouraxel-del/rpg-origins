@@ -39,7 +39,7 @@ export const VALLEY = [
     walk: [R(60, 260, 860, 230), R(800, 230, 150, 140), R(460, 440, 120, 100)],
     blocks: [R(140, 160, 170, 115), R(395, 160, 180, 125), R(620, 235, 170, 70)],
     anchors: { start: P(500, 420), default: P(500, 420), auto1: P(300, 360), auto2: P(700, 410), ilyra_spot: P(380, 425) },
-    features: { appui_racine: R(140, 160, 170, 115), appui_canal: R(395, 160, 180, 125), appui_memoire: R(620, 235, 170, 70), seuil: R(800, 230, 150, 140) },
+    features: { appui_racine: R(140, 160, 170, 115), appui_canal: R(395, 160, 180, 125), appui_memoire: R(620, 235, 170, 70), seuil: R(780, 230, 150, 140) },
     exits: [{ side: 'down', at: 520, to: 'valley_outlook' }, { side: 'right', at: 280, to: 'core_gate' }],
   }),
   loc({

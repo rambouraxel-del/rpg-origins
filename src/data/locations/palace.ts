@@ -7,7 +7,7 @@ export const PALACE = [
     walk: [R(150, 185, 720, 250), R(780, 110, 130, 100)],
     blocks: [R(365, 200, 245, 125), R(90, 230, 150, 150), R(235, 130, 125, 70), R(150, 400, 90, 40)],
     anchors: { start: P(300, 410), mira_spot: P(660, 300), jardinier_spot: P(270, 360), intendant_spot: P(310, 235), courtisan_spot: P(780, 360) },
-    features: { plant: R(90, 230, 150, 150), conduit: R(640, 150, 160, 50), mira_zone: R(600, 250, 150, 110) },
+    features: { plant: R(90, 230, 150, 150), conduit: R(600, 160, 170, 50), mira_zone: R(600, 250, 150, 110) },
     exits: [{ side: 'up', at: 840, to: 'palace_hall' }],
   }),
   loc({

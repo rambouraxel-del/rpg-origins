@@ -52,7 +52,7 @@ export const CH9 = [
         opt('Un voyage.', { set: setv('c09_nara_wish', 'trip') }), opt('Une maison.', { set: setv('c09_nara_wish', 'home') }), opt('Une journée sans devoir tout comprendre.', { set: setv('c09_nara_wish', 'day') }),
       ]),
       choice('Nara :', [
-        opt('(Exprimer clairement une proximité plus tendre.)', { cond: { notFlags: [] }, set: setv('nara_relationship', 'romance'), effects: [trust('nara', 1)], lines: [N('Elle prend sa main. Sans promettre qu\'ils vivront forcément ensemble.')] }),
+        opt('(Exprimer clairement une proximité plus tendre.)', { cond: { trustMin: { nara: 3 } }, set: setv('nara_relationship', 'romance'), effects: [trust('nara', 1)], lines: [N('Elle prend sa main. Sans promettre qu\'ils vivront forcément ensemble.')] }),
         opt('(Rester amis.)', { set: setv('nara_relationship', 'friendship'), lines: [N('Elle lui donne une deuxième cordelette. Les deux versions évitent de promettre qu\'ils vivront forcément ensemble.')] }),
       ]),
       say([L('nara', 'Je ne te dirai pas adieu pendant que tu es encore là.')]),

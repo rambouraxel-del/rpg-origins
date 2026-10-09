@@ -2,6 +2,7 @@
 import { SAVE_VERSION, SCENARIO_VERSION } from '../config';
 import type { CompanionId, Cond, Effect, Json, QuestState } from './types';
 import { BALANCE } from '../data/balance';
+import { EQUIPMENT } from '../data/items';
 import { audio } from '../systems/Audio';
 
 export interface JournalEntry { id: string; title: string; text: string; tab: 'story' | 'people' | 'memory' }
@@ -84,6 +85,7 @@ export function evalCond(s: GameState, c?: Cond): boolean {
   if (c.party) for (const p of c.party) if (!s.party.includes(p as CompanionId)) return false;
   if (c.chapterMin !== undefined && s.chapter < c.chapterMin) return false;
   if (c.chapterMax !== undefined && s.chapter > c.chapterMax) return false;
+  if (c.trustMin) for (const [who, n] of Object.entries(c.trustMin)) if ((s.trust[who] ?? 0) < n) return false;
   if (c.quests) for (const [q, st] of Object.entries(c.quests)) { const a = Array.isArray(st) ? st : [st]; if (!a.includes(s.quests[q])) return false; }
   if (c.any && !c.any.some((x) => evalCond(s, x))) return false;
   return true;
@@ -111,6 +113,7 @@ function applyOne(s: GameState, e: Effect): void {
   switch (e.op) {
     case 'flag': s.flags[e.key] = e.value === undefined ? true : e.value; break;
     case 'power': if (!s.powers.includes(e.id)) { s.powers.push(e.id); audio.chime(); } break;
+    case 'removePower': s.powers = s.powers.filter((x) => x !== e.id); break;
     case 'accord': if (!s.accords.includes(e.id)) s.accords.push(e.id); break;
     case 'item': if (!s.items.includes(e.id)) { s.items.push(e.id); audio.chime(); } break;
     case 'removeItem': s.items = s.items.filter((i) => i !== e.id); break;
@@ -146,7 +149,14 @@ function applyOne(s: GameState, e: Effect): void {
     case 'maxStats':
       s.hero.maxHp += e.hp ?? 0; s.hero.maxEnergy += e.energy ?? 0; s.hero.points += e.points ?? 0;
       s.hero.hp = s.hero.maxHp; s.hero.energy = s.hero.maxEnergy; break;
-    case 'equip': if (!s.equipment.owned.includes(e.id)) s.equipment.owned.push(e.id); break;
+    case 'equip': {
+      if (!s.equipment.owned.includes(e.id)) {
+        s.equipment.owned.push(e.id);
+        const slot = EQUIPMENT[e.id]?.slot;
+        if (slot && !s.equipment.slots[slot]) s.equipment.slots[slot] = e.id;
+      }
+      break;
+    }
     case 'consumable': s.consumables[e.id] = Math.min(e.id === 'soin' ? BALANCE.hero.maxHealItems : 99, (s.consumables[e.id] ?? 0) + e.qty); break;
     case 'save': break; // traité par le service de sauvegarde via onEffect
   }

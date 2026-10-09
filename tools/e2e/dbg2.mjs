@@ -1,5 +1,5 @@
 import { launch, ev, sleep } from './lib.mjs';
-const { browser, page, logs } = await launch({ url: 'http://127.0.0.1:4173/?dev=1&jump=C03S05' });
+const { browser, page, logs } = await launch({ url: `${process.env.E2E_BASE ?? 'http://127.0.0.1:4173'}/?dev=1&jump=C03S05` });
 await sleep(5000);
 const r = await ev(page, async () => {
   const H = window.__hub; const w = H.world;

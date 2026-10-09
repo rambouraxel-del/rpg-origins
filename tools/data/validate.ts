@@ -171,6 +171,19 @@ for (const l of LOCATIONS) {
     else if (!R.near(r, 66)) err(`${l.id}: zone « ${n} » hors de portée d'interaction (aucune case accessible à moins de 66 px)`);
   }
   if (l.rest && !R.near(l.rest, 60)) err(`${l.id}: puits inaccessible`);
+  // une zone d'objectif ou d'interaction ne doit pas chevaucher une sortie : se tenir dedans déclencherait un changement de lieu
+  for (const [n, r] of Object.entries(l.features)) {
+    if (n.startsWith('exit_')) continue;
+    for (const e of l.exits) {
+      const ex = e.rect;
+      const ov = r.x < ex.x + ex.w && r.x + r.w > ex.x && r.y < ex.y + ex.h && r.y + r.h > ex.y;
+      if (!ov) continue;
+      // chevauchement toléré si aucune case accessible de la zone n'est dans la sortie
+      let hit = false;
+      for (let y = Math.max(r.y, ex.y); y <= Math.min(r.y + r.h, ex.y + ex.h) && !hit; y += 6) for (let x = Math.max(r.x, ex.x); x <= Math.min(r.x + r.w, ex.x + ex.w) && !hit; x += 6) if (R.has(x, y) && inWalk(l, x, y)) hit = true;
+      if (hit) err(`${l.id}: la zone « ${n} » chevauche la sortie ${e.id} (accessible) : se tenir dedans déclencherait la sortie`);
+    }
+  }
 }
 
 function inWalk(l: LocationDef, x: number, y: number): boolean {

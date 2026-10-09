@@ -11,6 +11,7 @@ import { Combat } from '../systems/Combat';
 import { Stealth } from '../systems/Stealth';
 import { bannerFor } from '../data/banter';
 import { audio } from '../systems/Audio';
+import { heroMods } from '../systems/Mods';
 
 export const inRect = (r: Rect, x: number, y: number) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 
@@ -40,7 +41,7 @@ export class WorldScene extends Phaser.Scene {
   private pulse = 0;
   private hintGfx!: Phaser.GameObjects.Graphics;
   private debugGfx?: Phaser.GameObjects.Graphics;
-  private editor?: import('../systems/Editor').Editor;
+  editor?: import('../systems/Editor').Editor;
   /** Cible de l'objectif courant, affichée comme zone (anneau). */
   private goalRect: Rect | null = null;
   private exitHint = new Map<string, Phaser.GameObjects.Text>();
@@ -247,7 +248,8 @@ export class WorldScene extends Phaser.Scene {
     const moving = dx !== 0 || dy !== 0;
     if (moving && !this.combat.pausedByPlayer) {
       const len = Math.hypot(dx, dy);
-      const sp = (k.SHIFT.isDown && !this.combat.active ? RUN_SPEED : WALK_SPEED) * this.combat.speedFactor();
+      const mods = heroMods();
+      const sp = (k.SHIFT.isDown && !this.combat.active ? RUN_SPEED * (1 + mods.sprint) : WALK_SPEED) * (1 + mods.speed) * this.combat.speedFactor();
       const p = this.tryMove(this.player.x, this.player.y, (dx / len) * sp * dt, (dy / len) * sp * dt);
       this.player.setFacingVec(dx, dy);
       this.player.setPos(p.x, p.y);
@@ -311,16 +313,26 @@ export class WorldScene extends Phaser.Scene {
   }
 
   private updateFollowers(dt: number, moving: boolean): void {
+    const FORM = [{ x: -30, y: 8 }, { x: 30, y: 10 }, { x: 0, y: 26 }];
     let i = 0;
     for (const a of this.followers.values()) {
-      i++;
-      const h = this.history[Math.min(this.history.length - 1, i * 22)];
-      if (h) {
-        const dx = h.x - a.x, dy = h.y - a.y;
-        const d = Math.hypot(dx, dy);
-        if (d > 3) { a.setFacingVec(dx, dy); a.setPos(a.x + (dx / d) * Math.min(d, RUN_SPEED * dt), a.y + (dy / d) * Math.min(d, RUN_SPEED * dt)); }
-        a.tick(dt, d > 6 && moving);
+      const h = this.history[Math.min(this.history.length - 1, (i + 1) * 22)];
+      // à l'arrêt : formation autour du héros ; en marche : on suit le tracé, sans jamais coller au héros
+      let tx = h ? h.x : a.x, ty = h ? h.y : a.y;
+      if (!moving || Math.hypot(tx - this.player.x, ty - this.player.y) < 24) {
+        const f = FORM[i % FORM.length];
+        const p = this.nearestStand(this.player.x + f.x, this.player.y + f.y);
+        tx = p.x; ty = p.y;
       }
+      const dx = tx - a.x, dy = ty - a.y;
+      const d = Math.hypot(dx, dy);
+      if (d > 3) {
+        const step = Math.min(d, (d > 90 ? RUN_SPEED * 1.6 : RUN_SPEED) * dt);
+        const nx = a.x + (dx / d) * step, ny = a.y + (dy / d) * step;
+        a.setFacingVec(dx, dy); a.setPos(nx, ny);
+      }
+      a.tick(dt, d > 6);
+      i++;
     }
   }
 
@@ -332,14 +344,15 @@ export class WorldScene extends Phaser.Scene {
   private updateTarget(): void {
     let best: Target | null = null;
     const px = this.player.x, py = this.player.y;
-    const consider = (t: Target) => { const d = t.dist + (t.kind === 'hotspot' && hub.state.seenHotspots[t.id] ? 30 : 0); if (t.dist <= INTERACT_RADIUS * 1.25 && (!best || d < best.dist)) best = { ...t, dist: d }; };
+    const reachR = 1 + heroMods().reach;
+    const consider = (t: Target) => { const d = t.dist + (t.kind === 'hotspot' && hub.state.seenHotspots[t.id] ? 30 : 0) + (t.kind === 'hotspot' && t.id.startsWith('quest:') ? 25 : 0); if (t.dist <= INTERACT_RADIUS * 1.25 * reachR && (!best || d < best.dist)) best = { ...t, dist: d }; };
     for (const [id, a] of this.npcs) {
       if (!this.talkHandlers.has(id)) continue;
-      consider({ kind: 'actor', id, x: a.x, y: a.y, label: `${a.verb ?? 'Parler à'} ${a.title ?? nameOf(id)}`.replace(/^Guider (.*)$/, 'Guider : $1'), dist: Math.hypot(a.x - px, a.y - py) });
+      consider({ kind: 'actor', id, x: a.x, y: a.y, label: `${a.verb ?? 'Parler à'} ${a.title ?? nameOf(id)}`.replace(/^Guider (.*)$/, 'Guider : $1'), dist: Math.hypot(a.x - px, a.y - py) - 40 });
     }
     for (const [id, a] of this.followers) {
       // Un compagnon attendu par l'histoire (conversation de scène) passe avant les autres, même s'ils sont groupés.
-      consider({ kind: 'follower', id, x: a.x, y: a.y, label: `Parler à ${nameOf(id)}`, dist: Math.hypot(a.x - px, a.y - py) + (this.talkHandlers.has(id) ? -40 : 8) });
+      consider({ kind: 'follower', id, x: a.x, y: a.y, label: `Parler à ${nameOf(id)}`, dist: Math.hypot(a.x - px, a.y - py) + (this.talkHandlers.has(id) ? -40 : 45) });
     }
     for (const h of this.allHotspots()) {
       const r = this.hotRect(h);
@@ -398,6 +411,8 @@ export class WorldScene extends Phaser.Scene {
 
   // --------------------------------------------------------------- sorties
   private checkExits(): void {
+    // Pendant une scène ou une étape de quête, les sorties sont inactives : l'histoire ne change de lieu que par ses propres étapes.
+    if (this.director.running || this.director.questRunning) return;
     const feet = this.player;
     for (const e of this.loc.exits) {
       if (!inRect(e.rect, feet.x, feet.y)) continue;
