@@ -143,11 +143,13 @@ export class UIScene extends Phaser.Scene implements UiApi {
   objective(t: string | null): void { this.objBox.setVisible(!!t && this.hudOn); if (t) this.objText.setText(t); }
   prompt(t: string | null): void {
     this.promptBg.setVisible(!!t && !hub.locked); this.promptText.setVisible(!!t && !hub.locked);
-    if (t) { this.promptText.setText(t); this.promptBg.width = Math.max(220, this.promptText.width + 40); }
+    if (t) { this.promptText.setText(t); this.promptBg.setSize(Math.max(220, this.promptText.width + 40), 34); }
   }
 
   toast(t0: string): void {
     const t = scrubName(t0);
+    while (this.toastBox.length >= 3) { const o = this.toastBox.shift()!; o.t.destroy(); o.bg.destroy(); }
+    this.toastBox.forEach((o, i) => { o.t.y = 56 + i * 36; o.bg.y = 56 + i * 36; });
     const y = 56 + this.toastBox.length * 36;
     const tx = text(this, GAME_W / 2, y, t, 16, COL.text, 700).setOrigin(0.5, 0.5).setDepth(DEPTH.ui + 50).setAlpha(0);
     const bg = this.add.rectangle(GAME_W / 2, y, Math.min(740, tx.width + 36), tx.height + 14, 0x0f1620, 0.9).setStrokeStyle(2, COL.edge, 0.8).setDepth(DEPTH.ui + 49).setAlpha(0);
@@ -155,7 +157,7 @@ export class UIScene extends Phaser.Scene implements UiApi {
     this.toastBox.push(item);
     this.tweens.add({ targets: [tx, bg], alpha: 1, duration: 160 });
     this.time.delayedCall(2800, () => {
-      this.tweens.add({ targets: [tx, bg], alpha: 0, duration: 300, onComplete: () => { tx.destroy(); bg.destroy(); this.toastBox = this.toastBox.filter((x) => x !== item); } });
+      this.tweens.add({ targets: [tx, bg], alpha: 0, duration: 300, onComplete: () => { if (!tx.scene) return; tx.destroy(); bg.destroy(); this.toastBox = this.toastBox.filter((x) => x !== item); } });
     });
   }
 

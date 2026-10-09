@@ -4,9 +4,9 @@
   "branch": "claude/rpg-origins-complete",
   "branchType": "orpheline (git worktree add --orphan)",
   "sourceMain": "c5448b48e363b3419fdece3d4ffe0ab564641508",
-  "phase": "Lot 1-3 (WIP) : contenu narratif + décors",
-  "currentTask": "T2 sprites des personnages, autoplay e2e, audio",
-  "verification": "tsc OK ; npm run validate OK (61 scènes, 12 quêtes, 27 lieux) ; e2e scène témoin OK ; autoplay à faire",
+  "phase": "Lot 6-7 : vérification et livraison",
+  "currentTask": "Revue finale, rapport de livraison",
+  "verification": "validate OK; test:images 36/36; autoplay A/B (variantes) OK; persist 8/8; editor/audio OK",
   "blockers": [],
-  "nextAction": "Générer les planches de personnages (harnais), écrire tools/e2e/autoplay.mjs, vérifier les 2 routes"
+  "nextAction": "Finition optionnelle (visuels titre), rapport final ; déploiement manuel NON autorisé"
 }
