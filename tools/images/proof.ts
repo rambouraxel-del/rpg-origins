@@ -46,6 +46,13 @@ export function assetsHash(): string {
   return h.digest('hex');
 }
 
+/** Références officielles du style n°9 (PNG) : toujours placées en tête de la planche d'inventaire. */
+export function styleReferences(): Asset[] {
+  const dir = paths().styleRefDir;
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir).filter((f) => /\.png$/i.test(f)).sort().map((f) => ({ path: join(dir, f), generated: false, size: statSync(join(dir, f)).size }));
+}
+
 function rankAssets(query: string, assets: Asset[]): Asset[] {
   const q = words(query);
   const score = (a: Asset) => [...words(a.path.replace(/[\\/.]/g, ' '))].filter((w) => q.has(w)).length;
@@ -61,13 +68,16 @@ export interface Inventory {
   sheet: string;
   listed: Asset[];
   tiles: Asset[];
+  /** Nombre de références de style en tête de planche (premières vignettes). */
+  refCount: number;
 }
 
 /** Crée la planche de contact des assets existants et enregistre l'inventaire (empreinte du code + état des assets). */
 export async function createInventory(query = ''): Promise<Inventory> {
   const session = sessionId();
   const listed = rankAssets(query, listAssets());
-  const tiles = listed.filter((a) => /\.png$/i.test(a.path)).slice(0, MAX_TILES);
+  const refs = styleReferences();
+  const tiles = [...refs, ...listed.filter((a) => /\.png$/i.test(a.path))].slice(0, MAX_TILES);
   const rows = Math.max(1, Math.ceil(tiles.length / COLS));
   const sheet = newRaster(COLS * (TILE_W + PAD) + PAD, HEADER + rows * (TILE_H + PAD), [30, 30, 36]);
   const code = newCode();
@@ -92,7 +102,7 @@ export async function createInventory(query = ''): Promise<Inventory> {
     readLedger(session);
     appendEvent({ ev: 'inventory', id, session, codeHash: codeHash(code, id), assetsHash: assetsHash(), tiles: tiles.map((a) => a.path), assetCount: listed.length });
   });
-  return { id, code, sheet: file, listed, tiles };
+  return { id, code, sheet: file, listed, tiles, refCount: refs.length };
 }
 
 export interface Inspection {

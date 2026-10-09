@@ -37,6 +37,7 @@ export interface Paths {
   apiBase: string;
   assetsRoot: string;
   proofDir: string;
+  styleRefDir: string;
 }
 
 export const DEFAULT_MODEL = 'gpt-image-2.5-flare';
@@ -73,6 +74,7 @@ export function paths(): Paths {
     apiBase: process.env.IMAGE_API_BASE ?? 'https://api.openai.com/v1/images',
     assetsRoot: process.env.IMAGE_ASSETS_ROOT ?? 'public/assets',
     proofDir: process.env.IMAGE_PROOF_DIR ?? 'logs/proofs',
+    styleRefDir: process.env.IMAGE_STYLE_REF_DIR ?? 'assets-src/style-reference',
   };
 }
 

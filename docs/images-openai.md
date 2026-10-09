@@ -10,6 +10,7 @@ l'authentification sont gérés par l'environnement (Network Secret). Les comman
 # 1. Examiner les assets existants : produit une planche de contact avec un code dessiné dedans
 npm run image:inventory -- --query "mots du besoin"
 #    → ouvrir la planche (outil Read), regarder les assets, lire le code à 4 chiffres en haut à gauche
+#    (les premières vignettes sont les références officielles du style n°9, `assets-src/style-reference/`)
 
 # 2. Générer (ou image:edit) en fournissant le code lu
 npm run image:generate -- --prompt "..." --purpose "..." --target "..." --reuse-checked "..." --inventory-code 1234

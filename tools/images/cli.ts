@@ -54,6 +54,7 @@ try {
     status();
   } else if (mode === 'inventory') {
     const inv = await createInventory(values.query ?? '');
+    if (inv.refCount > 0) console.log(`Vignettes 1 à ${inv.refCount} : références officielles du style n°9 (à comparer avec tout ce qui sera généré).`);
     console.log(`${inv.listed.length} asset(s) image dans le jeu :`);
     inv.listed.forEach((a) => console.log(`  ${a.generated ? '[essai généré] ' : ''}${a.path} (${a.size} octets)`));
     console.log(`\nPlanche de contact : ${inv.sheet}`);

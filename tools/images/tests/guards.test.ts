@@ -5,7 +5,7 @@ import { createServer, type Server } from 'node:http';
 import { deflateSync } from 'node:zlib';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { GuardError, createInspection, createInventory, generateImage, editImage, reviewImage, type ImageOptions } from '../openai-images.ts';
@@ -57,6 +57,7 @@ beforeEach(() => {
   if (ORIG_REMOTE === undefined) delete process.env.CLAUDE_CODE_REMOTE_SESSION_ID; else process.env.CLAUDE_CODE_REMOTE_SESSION_ID = ORIG_REMOTE;
   process.env.IMAGE_ASSETS_ROOT = join(dir, 'assets');
   process.env.IMAGE_PROOF_DIR = join(dir, 'proofs');
+  process.env.IMAGE_STYLE_REF_DIR = join(dir, 'no-refs'); // les tests ne dépendent pas des vraies références
   mkdirSync(join(dir, 'assets', 'areas'), { recursive: true });
   writeFileSync(join(dir, 'assets', 'areas', 'forest.png'), makePng(96, 54));
   writeFileSync(join(dir, 'assets', 'areas', 'clearing.png'), makePng(96, 54, true));
@@ -381,6 +382,22 @@ test('inventaire périmé si les assets changent ou après le délai', async () 
   writeFileSync(f, readFileSync(f, 'utf8').split('\n').map((l) => (l && JSON.parse(l).id === inv.id ? JSON.stringify({ ...JSON.parse(l), ts: '2020-01-01T00:00:00.000Z' }) : l)).join('\n'));
   await blocked(generateImage({ ...opts(), inventoryCode: inv.code }), 'INVENTORY_EXPIRED');
   assert.equal(hits, 0);
+});
+
+test('les références de style n°9 sont toujours en tête de la planche d\'inventaire', async () => {
+  const refDir = join(dir, 'refs');
+  mkdirSync(refDir);
+  writeFileSync(join(refDir, 'b-decor.png'), makePng(96, 54));
+  writeFileSync(join(refDir, 'a-personnage.png'), makePng(96, 54));
+  process.env.IMAGE_STYLE_REF_DIR = refDir;
+  try {
+    const inv = await createInventory('forest');
+    assert.equal(inv.refCount, 2);
+    assert.deepEqual(inv.tiles.slice(0, 2).map((t) => basename(t.path)), ['a-personnage.png', 'b-decor.png']);
+    assert.equal(inv.tiles.length, 4); // 2 références + 2 assets
+  } finally {
+    process.env.IMAGE_STYLE_REF_DIR = join(dir, 'no-refs');
+  }
 });
 
 test('la planche de contact est une vraie image avec le code dessiné dedans', async () => {
