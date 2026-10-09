@@ -4,9 +4,9 @@
   "branch": "claude/rpg-origins-complete",
   "branchType": "orpheline (git worktree add --orphan)",
   "sourceMain": "c5448b48e363b3419fdece3d4ffe0ab564641508",
-  "phase": "Lot 0 - Inspection",
-  "currentTask": "T0.2 Lecture des documents et plan de couverture",
-  "verification": "aucune (rien de verifie)",
+  "phase": "Lot 1 - Moteur",
+  "currentTask": "T1.x moteur écrit (src/), à tester avec vrais décors ; prochaine : rédiger les scènes (data) puis générer décors",
+  "verification": "tsc OK ; e2e scène témoin OK (WIP)",
   "blockers": [],
   "nextAction": "Lire gameplay et bible, produire COVERAGE.csv, puis adapter le harnais au plafond 15 EUR (T0.4)"
 }

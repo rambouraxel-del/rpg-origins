@@ -5,7 +5,7 @@
 - T0.2 Lecture des 3 documents — VÉRIFIÉ (lus en entier)
 - T0.3 Couverture scènes/quêtes — TODO
 - T0.4 Harnais : plafond 15 € / réservation — VÉRIFIÉ (test:images 36/36)
-## Lot 1 — Moteur et scène témoin — TODO
+## Lot 1 — Moteur et scène témoin — EN COURS (moteur compilé, scène témoin jouée en e2e ; reste : contenu / décors)
 ## Lot 2 — Gameplay commun — TODO
 ## Lot 3 — Prologue + ch.1-3 — TODO
 ## Lot 4 — Ch.4-7 — TODO

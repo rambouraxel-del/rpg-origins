@@ -1,0 +1,10 @@
+import { launch, ev, sleep } from './lib.mjs';
+const { browser, page, logs } = await launch();
+await sleep(1500);
+await page.screenshot({ path: process.argv[2] ?? '/tmp/shot-title.png' });
+await ev(page, () => window.__hub.events.emit('title-choice', 'new'));
+await sleep(3000);
+await page.screenshot({ path: '/tmp/shot-game.png' });
+console.log(JSON.stringify(await ev(page, () => ({ loc: window.__hub.state.location, scene: window.__hub.state.currentScene, locked: window.__hub.uiLock })), null, 1));
+console.log(logs.join('\n') || 'aucune erreur console');
+await browser.close();
