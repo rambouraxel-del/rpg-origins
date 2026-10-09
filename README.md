@@ -10,6 +10,12 @@ npm run dev        # puis ouvrir l'adresse affichée (http://localhost:5173)
 npm run build      # vérification TypeScript + build dans dist/
 ```
 
+## Rendu
+
+Style non-pixel art n°9 : rendu lissé (`pixelArt` désactivé, pas de `image-rendering: pixelated`). Résolution interne 960×540 (16:9),
+mise à l'échelle de la fenêtre avec lissage. Exception temporaire : le héros est encore en pixel art et garde un filtrage NEAREST
+(`applyHeroTextureFilter` dans `entities/Player.ts`), à retirer quand il passera au style n°9.
+
 ## Contrôles
 
 Déplacement : ZQSD, WASD ou flèches. Maj : courir.
@@ -20,9 +26,9 @@ Mode débogage : ajouter `?debug` à l'adresse pour afficher les collisions.
 
 ```
 src/
-  config.ts                   Résolution (480x270, 16:9), vitesse, calques d'affichage
+  config.ts                   Résolution interne (960x540, 16:9), vitesse, calques d'affichage
   main.ts                     Configuration Phaser
-  scenes/BootScene.ts         Génère les graphismes provisoires
+  scenes/BootScene.ts         Charge les images (décors, héros) et crée les animations
   scenes/WorldScene.ts        Affiche une zone à partir de sa configuration
   entities/Player.ts          Personnage
   systems/InputController.ts  Clavier

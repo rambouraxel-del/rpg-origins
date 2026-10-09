@@ -9,7 +9,10 @@ const game = new Phaser.Game({
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   backgroundColor: '#000000',
-  pixelArt: true,
+  // Style non-pixel art n°9 : rendu lissé (pas de pixelArt). Seul le héros garde un filtrage NEAREST (voir Player.ts).
+  pixelArt: false,
+  antialias: true,
+  roundPixels: true, // sprites à positions entières : évite les pixels irréguliers du héros en mouvement
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,

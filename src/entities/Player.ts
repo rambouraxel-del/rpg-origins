@@ -30,6 +30,14 @@ export function preloadHero(scene: Phaser.Scene): void {
   }
 }
 
+/**
+ * Le héros est encore en pixel art (provisoire) alors que le reste du jeu est lissé : filtrage NEAREST sur ses seules textures.
+ * À retirer quand le héros passera au style n°9.
+ */
+export function applyHeroTextureFilter(scene: Phaser.Scene): void {
+  for (const key of HERO_SHEETS) scene.textures.get(`hero-${key}`).setFilter(Phaser.Textures.FilterMode.NEAREST);
+}
+
 export function createHeroAnimations(scene: Phaser.Scene): void {
   const add = (key: string, sheet: string, frameRate: number) =>
     scene.anims.create({

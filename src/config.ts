@@ -1,5 +1,5 @@
-// Résolution interne 16:9 (agrandie x2 => 1920x1080). Tout le jeu est pensé en pixels "natifs".
-// Le personnage (92x92) est affiché à sa taille d'origine pour garder un pixel art net.
+// Résolution interne 16:9 (affichée à l'échelle de la fenêtre, ex. x2 => 1920x1080, avec lissage).
+// Les décors (style non-pixel art n°9) sont en 960x540. Le héros (92x92, pixel art provisoire) est affiché à sa taille d'origine.
 export const GAME_WIDTH = 960;
 export const GAME_HEIGHT = 540;
 
