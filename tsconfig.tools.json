@@ -6,5 +6,6 @@
     "noEmit": true,
     "lib": ["ES2023", "DOM"]
   },
-  "include": ["tools/images"]
+  "include": ["tools/images"],
+  "exclude": []
 }

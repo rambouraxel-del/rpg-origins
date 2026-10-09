@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "image:generate": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts generate",
     "image:edit": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts edit",
-    "typecheck:tools": "tsc -p tsconfig.tools.json"
+    "typecheck:tools": "tsc -p tsconfig.tools.json",
+    "image:review": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts review",
+    "image:status": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts status",
+    "test:images": "NODE_NO_WARNINGS=1 node --test \"tools/images/tests/*.test.ts\""
   },
   "dependencies": {
     "phaser": "^4.2.1"

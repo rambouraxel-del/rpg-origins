@@ -1,0 +1,9 @@
+{
+  "monthlyBudgetUsd": 10,
+  "safetyMargin": 0.2,
+  "maxImagesPerCall": 5,
+  "maxImagesPerSession": 100,
+  "similarityThreshold": 0.7,
+  "maxComparableFailures": 2,
+  "recoveredLedger": { "monthlyBudgetUsd": 1, "maxImagesPerSession": 20 }
+}

@@ -1,0 +1,15 @@
+{
+  "_note": "TARIFS DE RÉFÉRENCE NON VÉRIFIÉS pour ce modèle (valeurs prudentes inspirées de gpt-image-1). A vérifier sur https://platform.openai.com/docs/pricing puis passer verified à true et renseigner checkedOn. Tant que verified=false, toutes les estimations sont multipliées par unverifiedSafetyFactor.",
+  "verified": false,
+  "checkedOn": null,
+  "unverifiedSafetyFactor": 2,
+  "models": {
+    "gpt-image-2.5-flare": {
+      "textInputPer1M": 5,
+      "imageInputPer1M": 10,
+      "imageOutputPer1M": 40,
+      "outputTokensPerMegapixel": { "low": 400, "medium": 1500, "high": 5500 },
+      "imageInputTokensEstimate": 1600
+    }
+  }
+}
