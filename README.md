@@ -16,6 +16,12 @@ Style non-pixel art n°9 : rendu lissé (`pixelArt` désactivé, pas de `image-r
 mise à l'échelle de la fenêtre avec lissage. Exception temporaire : le héros est encore en pixel art et garde un filtrage NEAREST
 (`applyHeroTextureFilter` dans `entities/Player.ts`), à retirer quand il passera au style n°9.
 
+### Prototype style n°9 (branche `proto/style9`)
+
+Forêt avec le décor de référence (`public/assets/areas/forest-style9.png`) et héros extrait de la planche de référence
+(8 poses statiques, `public/assets/hero-style9/hero9-dirs.png`, généré par `tools/extract-style9-hero.py`).
+Ajouter `?art=legacy` à l'adresse pour revenir aux anciens assets, conservés tels quels.
+
 ## Contrôles
 
 Déplacement : ZQSD, WASD ou flèches. Maj : courir.
