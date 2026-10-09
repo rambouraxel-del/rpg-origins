@@ -1,0 +1,8 @@
+{
+  "assets": [
+    {"id":"style9-reference-decor","file":"assets-src/style-reference/style9-reference-decor.png","origin":"importé de main c5448b4","license":"fourni par l'utilisateur","status":"référence officielle"},
+    {"id":"style9-reference-character","file":"assets-src/style-reference/style9-reference-character.png","origin":"importé de main c5448b4","license":"fourni par l'utilisateur","status":"référence officielle"},
+    {"id":"forest-style9","file":"public/assets/areas/forest-style9.png","origin":"importé de main c5448b4 (prototype style9)","license":"projet","status":"provisoire"},
+    {"id":"hero9-dirs","file":"public/assets/hero-style9/hero9-dirs.png","origin":"importé de main c5448b4, extrait de la planche de référence","license":"projet","status":"provisoire"}
+  ]
+}

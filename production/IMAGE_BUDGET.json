@@ -1,0 +1,11 @@
+{
+  "currency": "EUR",
+  "totalCapEur": 15,
+  "plannedProductionCapEur": 12,
+  "protectionEur": 3,
+  "envelopesEur": {"decors": 6, "heros": 4, "objets": 2, "protection": 3},
+  "financialSource": "tools/images/ledger/ledger.jsonl (source unique, ne jamais éditer à la main)",
+  "legacyHarnessCapUsd": 10,
+  "status": "harnais à adapter (T0.4) avant tout appel payant : aucun appel autorisé tant que non fait",
+  "importedHistory": "3 images (hist-1, hist-2, 9ee503d1) ; ~0,06 USD compté, ~0,15 USD estimé ; importé de main c5448b4"
+}

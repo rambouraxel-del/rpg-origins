@@ -1,0 +1,12 @@
+{
+  "repo": "rambouraxel-del/rpg-origins",
+  "remote": "https://github.com/rambouraxel-del/rpg-origins",
+  "branch": "claude/rpg-origins-complete",
+  "branchType": "orpheline (git worktree add --orphan)",
+  "sourceMain": "c5448b48e363b3419fdece3d4ffe0ab564641508",
+  "phase": "Lot 0 - Inspection",
+  "currentTask": "T0.2 Lecture des documents et plan de couverture",
+  "verification": "aucune (rien de verifie)",
+  "blockers": [],
+  "nextAction": "Lire gameplay et bible, produire COVERAGE.csv, puis adapter le harnais au plafond 15 EUR (T0.4)"
+}
