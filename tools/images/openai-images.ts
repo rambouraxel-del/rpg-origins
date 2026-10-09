@@ -8,6 +8,7 @@ import { computeUsd, parseSize } from './cost.ts';
 import { GuardError, preflight, taskKey, type Decision } from './guard.ts';
 import { appendEvent, calls, readLedger, withLock } from './ledger.ts';
 import { inspectPng, technicalIssues } from './png.ts';
+import { codeHash, fileHash } from './proof.ts';
 
 export { GuardError } from './guard.ts';
 
@@ -28,6 +29,8 @@ export interface DecisionFields {
   /** Regroupe les tentatives d'un même besoin (défaut : dérivé de purpose). */
   task?: string;
   overwrite?: boolean;
+  /** Code lu sur la planche de contact de `image:inventory` : preuve que les assets existants ont été regardés. */
+  inventoryCode?: string;
 }
 
 export interface ImageOptions extends DecisionFields {
@@ -70,15 +73,22 @@ function detailLog(entry: Record<string, unknown>): void {
 
 class ApiError extends Error {
   status?: number;
+  /** Vrai si la requête n'a certainement pas atteint le serveur (DNS introuvable, connexion refusée) : rien n'a pu être facturé. */
+  neverSent = false;
 }
+
+const NEVER_SENT = new Set(['ENOTFOUND', 'ECONNREFUSED', 'EAI_AGAIN']);
 
 async function callApi(kind: 'generations' | 'edits', init: RequestInit): Promise<any> {
   let res: Response;
   try {
     res = await fetch(`${paths().apiBase}/${kind}`, init);
   } catch (e) {
-    const code = (e as { cause?: { code?: string } }).cause?.code;
-    throw new ApiError(`Connexion à l'API impossible : ${code ?? (e as Error).message}${code === 'ENOTFOUND' ? ' (lancer via npm run : NODE_USE_ENV_PROXY=1)' : ''}`);
+    const cause = (e as { cause?: { code?: string; message?: string; errors?: { code?: string }[] } }).cause;
+    const code = cause?.code ?? cause?.errors?.[0]?.code;
+    const err = new ApiError(`Connexion à l'API impossible : ${code ?? (e as Error).message}${code === 'ENOTFOUND' ? ' (lancer via npm run : NODE_USE_ENV_PROXY=1)' : ''}`);
+    err.neverSent = (code !== undefined && NEVER_SENT.has(code)) || cause?.message === 'bad port'; // refus de fetch avant toute connexion
+    throw err;
   }
   const text = await res.text();
   let json: any;
@@ -109,7 +119,7 @@ async function run(kind: 'generate' | 'edit', o: ImageOptions & { inputs?: strin
   const decision: Decision = {
     kind, prompt: o.prompt, n, model, quality, size, inputImages: (o.inputs?.length ?? 0) + (o.mask ? 1 : 0),
     outputFile: fileFor(0), purpose: o.purpose, target: o.target, reuseChecked: o.reuseChecked,
-    qualityReason: o.qualityReason, newApproach: o.newApproach, overrideReason: o.overrideReason, task: o.task, overwrite: o.overwrite,
+    qualityReason: o.qualityReason, newApproach: o.newApproach, overrideReason: o.overrideReason, task: o.task, overwrite: o.overwrite, inventoryCode: o.inventoryCode,
   };
   parseSize(size);
   for (let i = 1; i < n; i++) {
@@ -131,7 +141,7 @@ async function run(kind: 'generate' | 'edit', o: ImageOptions & { inputs?: strin
     const p = preflight(decision, events, session);
     appendEvent({
       ev: 'reserve', id, session, kind, task: p.task, model, quality, size, n, estUsd: p.estUsd, purpose: o.purpose, target: o.target,
-      reuseChecked: o.reuseChecked, newApproach: o.newApproach ?? null, overrideReason: o.overrideReason ?? null,
+      reuseChecked: o.reuseChecked, inventoryId: p.inventoryId, newApproach: o.newApproach ?? null, overrideReason: o.overrideReason ?? null,
       prompt: o.prompt.slice(0, 400), output: fileFor(0),
     });
     return p;
@@ -178,10 +188,11 @@ async function run(kind: 'generate' | 'edit', o: ImageOptions & { inputs?: strin
     return { files, usage: json.usage, estUsd: pre.estUsd, computedUsd, issues, warnings: pre.warnings };
   } catch (e) {
     const status = (e as ApiError).status;
-    // 4xx = requête refusée avant génération : rien de facturé. Autre erreur : on garde l'estimation (prudent).
+    // 4xx ou requête jamais partie = rien de facturé. Autre erreur (5xx, coupure, réponse illisible) : on garde l'estimation (prudent).
+    const notBilled = (status !== undefined && status >= 400 && status < 500) || (e as ApiError).neverSent === true;
     await withLock(() => {
       readLedger(session);
-      if (status !== undefined && status >= 400 && status < 500) appendEvent({ ev: 'release', id, session, reason: (e as Error).message.slice(0, 300) });
+      if (notBilled) appendEvent({ ev: 'release', id, session, reason: (e as Error).message.slice(0, 300) });
       else appendEvent({ ev: 'unknown', id, session, reason: (e as Error).message.slice(0, 300) });
     });
     detailLog({ kind, id, session, status: 'error', model, quality, size, n, prompt: o.prompt, error: (e as Error).message });
@@ -192,14 +203,25 @@ async function run(kind: 'generate' | 'edit', o: ImageOptions & { inputs?: strin
 export const generateImage = (o: ImageOptions) => run('generate', o);
 export const editImage = (o: EditOptions) => run('edit', o);
 
-/** Enregistre le verdict de revue d'une image générée (obligatoire avant une nouvelle génération de la même tâche). */
-export async function reviewImage(file: string, verdict: 'ok' | 'fail', reason = 'other', note = ''): Promise<void> {
+/**
+ * Enregistre le verdict d'une image générée. Exige le code lu sur l'aperçu produit par `image:inspect`
+ * (preuve technique que l'image a été regardée) et que le fichier n'ait pas changé depuis.
+ */
+export async function reviewImage(file: string, verdict: 'ok' | 'fail', reason = 'other', note = '', code = ''): Promise<void> {
   const session = sessionId();
   await withLock(() => {
     const events = readLedger(session);
     const call = calls(events).find((c) => ((c.settle?.files as string[] | undefined) ?? []).some((f) => f === file || basename(f) === basename(file)));
     if (!call) throw new Error(`Aucune génération enregistrée pour ${file}.`);
     if (verdict === 'fail' && !reason) throw new Error('--reason requis pour un échec.');
-    appendEvent({ ev: 'review', id: call.id, session, verdict, reason, note: note.slice(0, 300), task: taskKey({ task: call.task }) });
+    const stored = ((call.settle?.files as string[]) ?? []).find((f) => f === file || basename(f) === basename(file))!;
+    const inspection = [...call.inspections].reverse().find((i) => i.file === stored && i.session === session && i.codeHash === codeHash(code, String(i.inspectId)));
+    if (!code.trim() || !inspection) {
+      throw new GuardError('INSPECTION_REQUIRED', `Aucune inspection valide pour ${file} : \`npm run image:inspect -- --file ${file}\`, regardez l'aperçu, puis repassez le code lu avec --code.`);
+    }
+    if (inspection.fileHash !== fileHash(stored)) throw new GuardError('INSPECTION_STALE', `${file} a changé depuis son inspection : refaites image:inspect.`);
+    appendEvent({ ev: 'review', id: call.id, session, file: stored, verdict, reason, note: note.slice(0, 300), inspectId: inspection.inspectId, task: taskKey({ task: call.task }) });
   });
 }
+
+export { createInspection, createInventory } from './proof.ts';

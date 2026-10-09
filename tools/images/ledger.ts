@@ -2,10 +2,12 @@
 // Chaque appel = un événement "reserve" (estimation), puis "settle" (calcul réel) ou "release" (rien généré).
 import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { paths } from './config.ts';
+import { execFileSync } from 'node:child_process';
+import { UNKNOWN_SESSION, paths } from './config.ts';
+import { parseSize } from './cost.ts';
 
 export interface LedgerEvent {
-  ev: 'init' | 'reserve' | 'settle' | 'release' | 'unknown' | 'review';
+  ev: 'init' | 'reserve' | 'settle' | 'release' | 'unknown' | 'review' | 'inventory' | 'inspect';
   ts: string;
   month: string;
   session: string;
@@ -75,6 +77,7 @@ export interface Call {
   reserve: LedgerEvent;
   settle?: LedgerEvent;
   reviews: LedgerEvent[];
+  inspections: LedgerEvent[];
 }
 
 /** Reconstruit l'état de chaque appel à partir des événements. */
@@ -84,7 +87,7 @@ export function calls(events: LedgerEvent[]): Call[] {
     if (e.ev === 'reserve') {
       byId.set(e.id!, {
         id: e.id!, session: e.session, month: e.month, task: String(e.task ?? ''), n: Number(e.n), estUsd: Number(e.estUsd),
-        obsUsd: null, countedUsd: Number(e.estUsd), state: 'reserved', reserve: e, reviews: [],
+        obsUsd: null, countedUsd: Number(e.estUsd), state: 'reserved', reserve: e, reviews: [], inspections: [],
       });
       continue;
     }
@@ -102,6 +105,8 @@ export function calls(events: LedgerEvent[]): Call[] {
       c.state = 'unknown'; // appel peut-être facturé : on garde l'estimation
     } else if (e.ev === 'review') {
       c.reviews.push(e);
+    } else if (e.ev === 'inspect') {
+      c.inspections.push(e);
     }
   }
   return [...byId.values()];
@@ -118,10 +123,56 @@ export interface Summary {
   monthImages: number;
 }
 
+/** Verdict d'un appel : "ok" si au moins une image est acceptée, "fail" si toutes sont rejetées, undefined tant que des images ne sont pas évaluées. */
+export function verdictOf(c: Call): 'ok' | 'fail' | undefined {
+  const files = (c.settle?.files as string[] | undefined) ?? [];
+  const latest = new Map<string, string>();
+  for (const r of c.reviews) latest.set(String(r.file ?? ''), String(r.verdict));
+  if (latest.has('')) return latest.get('') as 'ok' | 'fail'; // revues historiques sans fichier
+  if ([...latest.values()].includes('ok')) return 'ok';
+  if (files.length > 0 && files.every((f) => latest.get(f) === 'fail')) return 'fail';
+  return undefined;
+}
+
+export const failReason = (c: Call) => String([...c.reviews].reverse().find((r) => r.verdict === 'fail')?.reason ?? 'other');
+
+/** Maximum de tokens de sortie par mégapixel réellement observé, par qualité (sert à relever l'estimation). */
+export function observedTokensPerMp(events: LedgerEvent[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const c of calls(events)) {
+    const tokens = (c.settle?.usage as { output_tokens?: number } | null | undefined)?.output_tokens;
+    if (c.state !== 'settled' || typeof tokens !== 'number') continue;
+    try {
+      const { w, h } = parseSize(String(c.reserve.size));
+      const perMp = tokens / (c.n * ((w * h) / 1e6));
+      const q = String(c.reserve.quality);
+      out[q] = Math.max(out[q] ?? 0, perMp);
+    } catch {
+      /* taille illisible : ignoré */
+    }
+  }
+  return out;
+}
+
+export interface Summary {
+  month: string;
+  recovered: boolean;
+  monthEstUsd: number;
+  monthObsUsd: number;
+  monthCountedUsd: number;
+  sessionImages: number;
+  sessionCountedUsd: number;
+  monthImages: number;
+}
+
+/**
+ * Compteur de session : par identifiant. Sans identifiant fiable (session "unknown-session"), toutes les sessions
+ * anonymes partagent UN compteur, sur tout le mois (conservateur).
+ */
 export function summarize(events: LedgerEvent[], session: string, month = monthOf()): Summary {
   const all = calls(events);
   const inMonth = all.filter((c) => c.month === month);
-  const mine = all.filter((c) => c.session === session && c.state !== 'released');
+  const mine = all.filter((c) => c.session === session && c.state !== 'released' && (session !== UNKNOWN_SESSION || c.month === month));
   const sum = (a: Call[], f: (c: Call) => number) => a.reduce((s, c) => s + f(c), 0);
   return {
     month,
@@ -133,4 +184,29 @@ export function summarize(events: LedgerEvent[], session: string, month = monthO
     sessionCountedUsd: sum(mine, (c) => c.countedUsd),
     monthImages: sum(inMonth.filter((c) => c.state !== 'released'), (c) => c.n),
   };
+}
+
+export interface Persistence {
+  tracked: boolean | null;
+  uncommitted: boolean | null;
+  detail: string;
+}
+
+/** Le registre n'est durable que s'il est suivi par git ET commité/poussé. Vérification locale (ne contacte pas GitHub). */
+export function persistenceStatus(cwd?: string): Persistence {
+  const file = paths().ledger;
+  const git = (...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+  try {
+    let tracked = true;
+    try {
+      git('ls-files', '--error-unmatch', '--', file);
+    } catch {
+      tracked = false;
+    }
+    const dirty = git('status', '--porcelain', '--', file) !== '';
+    const detail = !tracked ? 'registre NON suivi par git : perdu si l\'environnement est recréé' : dirty ? 'modifications NON commitées : à commiter et pousser pour survivre à une recréation de l\'environnement' : 'à jour dans git localement (vérifiez aussi que la branche est poussée)';
+    return { tracked, uncommitted: dirty, detail };
+  } catch {
+    return { tracked: null, uncommitted: null, detail: 'état git indisponible' };
+  }
 }

@@ -1,5 +1,5 @@
-// Estimation avant appel, calcul après appel (à partir des tokens renvoyés par l'API).
-// Ce sont des CALCULS, jamais une garantie du montant facturé.
+// Estimation avant appel, calcul après appel (à partir des tokens renvoyés). Ce sont des CALCULS, jamais la facture.
+// Deux incertitudes SÉPARÉES : le prix par token (pricing.rates) et le nombre de tokens d'une génération (pricing.tokenEstimates).
 import type { ModelPricing, Pricing } from './config.ts';
 
 export interface CostInput {
@@ -23,17 +23,33 @@ export function parseSize(size: string): { w: number; h: number } {
   return { w: Number(m[1]), h: Number(m[2]) };
 }
 
-/** Estimation prudente (jetons de sortie par mégapixel, multiplicateur si tarifs non vérifiés). */
-export function estimateUsd(pricing: Pricing, c: CostInput): number {
+export interface TokenEstimate {
+  output: number;
+  textInput: number;
+  imageInput: number;
+}
+
+/** Tokens attendus, toujours majorés par tokenEstimates.safetyFactor et relevés au maximum déjà observé (tokens/Mpx par qualité). */
+export function estimateTokens(pricing: Pricing, c: CostInput, observedPerMp: Record<string, number> = {}): TokenEstimate {
   const p = modelPricing(pricing, c.model);
-  const perMp = p.outputTokensPerMegapixel[c.quality];
-  if (perMp === undefined) throw new Error(`Qualité inconnue : "${c.quality}" (attendu : ${Object.keys(p.outputTokensPerMegapixel).join(', ')}).`);
+  const table = p.outputTokensPerMegapixel[c.quality];
+  if (table === undefined) throw new Error(`Qualité inconnue : "${c.quality}" (attendu : ${Object.keys(p.outputTokensPerMegapixel).join(', ')}).`);
   const { w, h } = parseSize(c.size);
-  const outputTokens = c.n * ((w * h) / 1e6) * perMp;
-  const textTokens = Math.ceil(c.promptChars / 3) + 50;
-  const imageTokens = c.inputImages * p.imageInputTokensEstimate;
-  const usd = (textTokens * p.textInputPer1M + imageTokens * p.imageInputPer1M + outputTokens * p.imageOutputPer1M) / 1e6;
-  return usd * (pricing.verified ? 1 : pricing.unverifiedSafetyFactor);
+  const perMp = Math.max(table, observedPerMp[c.quality] ?? 0);
+  const f = pricing.tokenEstimates.safetyFactor;
+  return {
+    output: c.n * ((w * h) / 1e6) * perMp * f,
+    textInput: (Math.ceil(c.promptChars / 3) + 50) * f,
+    imageInput: c.inputImages * p.imageInputTokensEstimate * f,
+  };
+}
+
+/** Coût estimé avant l'appel. Si les prix ne sont pas vérifiés, multiplicateur supplémentaire. */
+export function estimateUsd(pricing: Pricing, c: CostInput, observedPerMp: Record<string, number> = {}): number {
+  const p = modelPricing(pricing, c.model);
+  const t = estimateTokens(pricing, c, observedPerMp);
+  const usd = (t.textInput * p.textInputPer1M + t.imageInput * p.imageInputPer1M + t.output * p.imageOutputPer1M) / 1e6;
+  return usd * (pricing.rates.verified ? 1 : pricing.rates.unverifiedRatesFactor);
 }
 
 /** Coût calculé après appel depuis `usage` ; null si l'API n'a pas renvoyé d'usage exploitable. */

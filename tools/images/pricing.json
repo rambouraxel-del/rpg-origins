@@ -1,13 +1,22 @@
 {
-  "_note": "TARIFS DE RÉFÉRENCE NON VÉRIFIÉS pour ce modèle (valeurs prudentes inspirées de gpt-image-1). A vérifier sur https://platform.openai.com/docs/pricing puis passer verified à true et renseigner checkedOn. Tant que verified=false, toutes les estimations sont multipliées par unverifiedSafetyFactor.",
-  "verified": false,
-  "checkedOn": null,
-  "unverifiedSafetyFactor": 2,
+  "_note": "Deux incertitudes distinctes : (1) rates = prix par million de tokens ; (2) tokenEstimates = nombre de tokens qu'une génération consommera (inconnu avant l'appel).",
+  "rates": {
+    "verified": true,
+    "tier": "Standard",
+    "source": "https://developers.openai.com/api/docs/guides/image-generation",
+    "checkedOn": "2026-10-09",
+    "verifiedBy": "Tarifs fournis par l'utilisateur d'après cette source ; non recoupés par l'outil (la page est inaccessible depuis l'environnement cloud).",
+    "unverifiedRatesFactor": 2
+  },
+  "tokenEstimates": {
+    "safetyFactor": 2,
+    "note": "Nombre de tokens d'une génération : estimation prudente (table ci-dessous x safetyFactor, relevée à la hausse par le maximum réellement observé dans le registre)."
+  },
   "models": {
     "gpt-image-2.5-flare": {
       "textInputPer1M": 5,
-      "imageInputPer1M": 10,
-      "imageOutputPer1M": 40,
+      "imageInputPer1M": 8,
+      "imageOutputPer1M": 30,
       "outputTokensPerMegapixel": { "low": 400, "medium": 1500, "high": 5500 },
       "imageInputTokensEstimate": 1600
     }

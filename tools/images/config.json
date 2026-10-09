@@ -5,5 +5,9 @@
   "maxImagesPerSession": 100,
   "similarityThreshold": 0.7,
   "maxComparableFailures": 2,
-  "recoveredLedger": { "monthlyBudgetUsd": 1, "maxImagesPerSession": 20 }
+  "recoveredLedger": {
+    "monthlyBudgetUsd": 1,
+    "maxImagesPerSession": 20
+  },
+  "inventoryMaxAgeMinutes": 120
 }

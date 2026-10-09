@@ -13,7 +13,9 @@
     "typecheck:tools": "tsc -p tsconfig.tools.json",
     "image:review": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts review",
     "image:status": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts status",
-    "test:images": "NODE_NO_WARNINGS=1 node --test \"tools/images/tests/*.test.ts\""
+    "test:images": "NODE_NO_WARNINGS=1 node --test \"tools/images/tests/*.test.ts\"",
+    "image:inventory": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts inventory",
+    "image:inspect": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts inspect"
   },
   "dependencies": {
     "phaser": "^4.2.1"
