@@ -15,7 +15,9 @@
     "image:status": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts status",
     "test:images": "NODE_NO_WARNINGS=1 node --test \"tools/images/tests/*.test.ts\"",
     "image:inventory": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts inventory",
-    "image:inspect": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts inspect"
+    "image:inspect": "NODE_USE_ENV_PROXY=1 NODE_NO_WARNINGS=1 node tools/images/cli.ts inspect",
+    "test": "npm run test:images && npm run test:data",
+    "test:data": "NODE_NO_WARNINGS=1 node --test \"tools/tests/*.test.ts\""
   },
   "dependencies": {
     "phaser": "^4.2.1"

@@ -3,6 +3,8 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { DEFAULT_MODEL, DEFAULT_QUALITY, DEFAULT_SIZE, loadPricing, paths, sessionId } from './config.ts';
 import { computeUsd, parseSize } from './cost.ts';
 import { GuardError, preflight, taskKey, type Decision } from './guard.ts';
@@ -11,6 +13,8 @@ import { inspectPng, technicalIssues } from './png.ts';
 import { codeHash, fileHash } from './proof.ts';
 
 export { GuardError } from './guard.ts';
+
+const DEFAULT_LEDGER = join(dirname(fileURLToPath(import.meta.url)), 'ledger', 'ledger.jsonl');
 
 /** Champs de décision : obligatoires, vérifiés avant tout appel payant. */
 export interface DecisionFields {
@@ -147,6 +151,17 @@ async function run(kind: 'generate' | 'edit', o: ImageOptions & { inputs?: strin
     return p;
   });
 
+  // Checkpoint financier : la réservation doit être poussée avant l'envoi. Échec = aucun appel (réservation libérée).
+  try {
+    checkpointLedger(`Registre images : réservation ${id.slice(0, 8)} (${o.target ?? ''})`);
+  } catch (e) {
+    await withLock(() => {
+      readLedger(session);
+      appendEvent({ ev: 'release', id, session, reason: `checkpoint distant impossible : ${(e as Error).message}`.slice(0, 300) });
+    });
+    throw new GuardError('CHECKPOINT_FAILED', `Sauvegarde distante du registre impossible, aucun appel envoyé : ${(e as Error).message}`);
+  }
+
   try {
     let json: any;
     if (kind === 'generate') {
@@ -185,6 +200,7 @@ async function run(kind: 'generate' | 'edit', o: ImageOptions & { inputs?: strin
       appendEvent({ ev: 'settle', id, session, status: 'ok', files, obsUsd: computedUsd, usage: json.usage ?? null, issues });
     });
     detailLog({ kind, id, session, model, quality, size, n, prompt: o.prompt, files, estUsd: pre.estUsd, computedUsd, usage: json.usage ?? null, issues });
+    try { checkpointLedger(`Registre images : règlement ${id.slice(0, 8)}`); } catch { pre.warnings.push('Checkpoint distant du règlement non poussé : à pousser avant toute autre action.'); }
     return { files, usage: json.usage, estUsd: pre.estUsd, computedUsd, issues, warnings: pre.warnings };
   } catch (e) {
     const status = (e as ApiError).status;
@@ -197,6 +213,33 @@ async function run(kind: 'generate' | 'edit', o: ImageOptions & { inputs?: strin
     });
     detailLog({ kind, id, session, status: 'error', model, quality, size, n, prompt: o.prompt, error: (e as Error).message });
     throw e;
+  }
+}
+
+/**
+ * Commit + push du registre (seulement pour le vrai registre du dépôt : les tests utilisent un registre temporaire).
+ * Lève une erreur si la sauvegarde distante échoue.
+ */
+export function checkpointLedger(message: string): void {
+  const ledger = paths().ledger;
+  if (resolve(ledger) !== resolve(DEFAULT_LEDGER)) return;
+  const git = (...a: string[]) => execFileSync('git', a, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  git('add', ledger);
+  try {
+    git('-c', 'user.name=Claude', '-c', 'user.email=noreply@anthropic.com', 'commit', '-m', message, '--', ledger);
+  } catch (e) {
+    const out = String((e as { stdout?: string }).stdout ?? '') + String((e as Error).message);
+    if (!/nothing (added )?to commit|no changes added/i.test(out)) throw e;
+  }
+  const branch = git('rev-parse', '--abbrev-ref', 'HEAD');
+  for (const wait of [0, 2000, 4000]) {
+    if (wait) execFileSync('sleep', [String(wait / 1000)]);
+    try {
+      git('push', '-u', 'origin', branch);
+      return;
+    } catch (e) {
+      if (wait === 4000) throw e;
+    }
   }
 }
 

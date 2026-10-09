@@ -3,9 +3,16 @@
   "totalCapEur": 15,
   "plannedProductionCapEur": 12,
   "protectionEur": 3,
-  "envelopesEur": {"decors": 6, "heros": 4, "objets": 2, "protection": 3},
+  "envelopesEur": {
+    "decors": 6,
+    "heros": 4,
+    "objets": 2,
+    "protection": 3
+  },
   "financialSource": "tools/images/ledger/ledger.jsonl (source unique, ne jamais éditer à la main)",
-  "legacyHarnessCapUsd": 10,
-  "status": "harnais à adapter (T0.4) avant tout appel payant : aucun appel autorisé tant que non fait",
-  "importedHistory": "3 images (hist-1, hist-2, 9ee503d1) ; ~0,06 USD compté, ~0,15 USD estimé ; importé de main c5448b4"
+  "status": "harnais adapté (T0.4) et testé en simulation (npm run test:images) ; appels payants autorisés via npm run image:* uniquement",
+  "importedHistory": "3 images (hist-1, hist-2, 9ee503d1) ; ~0,06 USD compté, ~0,15 USD estimé ; importé de main c5448b4",
+  "requestLog": "tools/images/ledger/ledger.jsonl (réservations, appels, règlements, états inconnus ; pas de second registre)",
+  "conversion": "borne prudente 1 USD = 1 EUR, frais x1,1 (config.json) ; coûts calculés, pas la facture OpenAI",
+  "policy": "1 image par appel ; réservation + commit + push du registre AVANT l'envoi (échec = pas d'appel) ; <=1 correction payante par besoin logique"
 }

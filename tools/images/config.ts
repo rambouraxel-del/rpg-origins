@@ -6,14 +6,22 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 export interface Config {
-  monthlyBudgetUsd: number;
-  safetyMargin: number;
+  /** Plafond cumulé (toutes sessions et branches) de la production planifiée, en euros. */
+  plannedBudgetEur: number;
+  /** Plafond absolu, protection comprise. */
+  hardCapEur: number;
+  /** Borne prudente de conversion USD -> EUR (1 USD compte pour au plus ce nombre d'euros). */
+  eurPerUsdBound: number;
+  /** Majoration pour frais éventuels. */
+  feeFactor: number;
+  /** Politique du projet : nombre d'images par appel (appliqué par la CLI). */
+  policyImagesPerCall: number;
   maxImagesPerCall: number;
   maxImagesPerSession: number;
   similarityThreshold: number;
   maxComparableFailures: number;
   inventoryMaxAgeMinutes: number;
-  recoveredLedger: { monthlyBudgetUsd: number; maxImagesPerSession: number };
+  recoveredLedger: { plannedBudgetEur: number; maxImagesPerSession: number };
 }
 
 export interface ModelPricing {
@@ -57,7 +65,7 @@ export function capped(base: number, env: string | undefined): number {
 /** Relu à chaque appel (les tests changent l'environnement). */
 export function loadConfig(): Config {
   const cfg: Config = readJson('config.json');
-  cfg.monthlyBudgetUsd = capped(cfg.monthlyBudgetUsd, process.env.IMAGE_MONTHLY_BUDGET_USD);
+  cfg.plannedBudgetEur = capped(cfg.plannedBudgetEur, process.env.IMAGE_PLANNED_BUDGET_EUR);
   cfg.maxImagesPerSession = capped(cfg.maxImagesPerSession, process.env.IMAGE_SESSION_LIMIT);
   return cfg;
 }

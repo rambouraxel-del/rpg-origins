@@ -1,10 +1,10 @@
 # Tâches (états : TODO / EN COURS / VÉRIFIÉ / BLOQUÉ)
 
 ## Lot 0 — Inspection
-- T0.1 Branche orpheline, imports, mémoire — EN COURS
-- T0.2 Lecture des 3 documents — EN COURS
+- T0.1 Branche orpheline, imports, mémoire — VÉRIFIÉ (poussé)
+- T0.2 Lecture des 3 documents — VÉRIFIÉ (lus en entier)
 - T0.3 Couverture scènes/quêtes — TODO
-- T0.4 Harnais : plafond 15 € / réservation — TODO
+- T0.4 Harnais : plafond 15 € / réservation — VÉRIFIÉ (test:images 36/36)
 ## Lot 1 — Moteur et scène témoin — TODO
 ## Lot 2 — Gameplay commun — TODO
 ## Lot 3 — Prologue + ch.1-3 — TODO
