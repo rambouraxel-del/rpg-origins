@@ -164,6 +164,9 @@ export class UIScene extends Phaser.Scene implements UiApi {
     const job = this.chain.then(async () => {
       hub.lock();
       this.prompt(null);
+      // La boîte se place en haut quand le héros est dans la moitié basse de l'écran, pour ne jamais le masquer.
+      const py = hub.world?.player.y ?? 200;
+      this.dlg.y = py > 290 ? 66 : 378;
       this.dlg.setVisible(true);
       for (const ln of lines) {
         const who = ln.narr ? '' : nameOf(ln.who);

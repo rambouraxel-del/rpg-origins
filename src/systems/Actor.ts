@@ -65,9 +65,11 @@ export class Actor {
     this.id = id;
     this.def = CHARS[id] ?? CHARS.civil;
     const sheet = this.def.sheet;
-    const texKey = sheet ? sheet.key : placeholderKey(this.def.id);
-    this.scale = (this.def.scale ?? 1) * (id === 'elyan' ? HERO_SCALE : sheet ? 1 : 0.95);
-    this.sprite = scene.add.image(x, y, texKey, sheet ? 0 : undefined).setOrigin(0.5, 0.96).setScale(this.scale);
+    const hasImg = !!this.def.img && scene.textures.exists(`c:${id}`);
+    const texKey = sheet ? sheet.key : hasImg ? `c:${id}` : placeholderKey(this.def.id);
+    // Images de face : normalisées à ~66 px d'adulte (la planche source est normalisée à 168 px).
+    this.scale = (this.def.scale ?? 1) * (id === 'elyan' ? HERO_SCALE : hasImg ? 66 / 168 : sheet ? 1 : 0.95);
+    this.sprite = scene.add.image(x, y, texKey, sheet ? 0 : undefined).setOrigin(0.5, hasImg ? 0.985 : 0.96).setScale(this.scale);
     this.height = this.sprite.height * this.scale;
     this.shadow = scene.add.ellipse(x, y, 34 * this.scale, 11 * this.scale, 0x000000, 0.28);
     this.setPos(x, y);
