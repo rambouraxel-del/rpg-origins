@@ -2,13 +2,14 @@
 import Phaser from 'phaser';
 import { DEPTH, GAME_H, GAME_W } from '../config';
 import { hub, type CombatHudInfo, type UiApi } from '../game';
-import { COL, bar, button, fs, panel, text } from '../ui/kit';
+import { BUTTONS, COL, bar, button, fs, panel, text } from '../ui/kit';
 import { nameOf } from '../data/characters';
 import type { Line, PuzzleDef } from '../core/types';
 import { Menus } from '../ui/menus';
 import { runPuzzle } from '../ui/puzzle';
 import { showFinalChoice, showEpilogue, showCredits } from '../ui/ending';
 import { POWERS } from '../data/powers';
+import { audio } from '../systems/Audio';
 
 export class UIScene extends Phaser.Scene implements UiApi {
   private hpBar!: ReturnType<typeof bar>;
@@ -72,7 +73,7 @@ export class UIScene extends Phaser.Scene implements UiApi {
     this.dlg = this.add.container(20, 378, [dbg, this.dlgNameBg, this.dlgName, this.dlgText, this.dlgMore]).setDepth(D + 10).setVisible(false);
     // entrées
     const kb = this.input.keyboard!;
-    const adv = () => this.advance();
+    const adv = () => { audio.start(); this.advance(); };
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => { if (p.leftButtonDown()) adv(); });
     for (const k of ['E', 'SPACE', 'ENTER']) kb.on(`keydown-${k}`, adv);
     kb.on('keydown-ESC', () => { if (!hub.locked || this.menus.isOpen('')) this.menus.toggle('pause'); });
@@ -81,6 +82,17 @@ export class UIScene extends Phaser.Scene implements UiApi {
     kb.on('keydown-M', () => { if (!hub.locked) this.menus.toggle('map'); else if (this.menus.isOpen('map')) this.menus.close(); });
     this.setHud(false);
     this.fadeRect.setAlpha(1);
+    // API de test (lecture seule + clic par libellé) : utilisée par tools/e2e, sans effet sur le jeu.
+    (window as unknown as { __ui: unknown }).__ui = {
+      state: () => ({ dialogue: this.dlg.visible, typing: !!this.typing, buttons: [...BUTTONS].filter((b) => b.box.active && b.box.visible).map((b) => b.label()), fade: this.fadeRect.alpha }),
+      click: (match: string, nth = 0) => {
+        const list = [...BUTTONS].filter((b) => b.box.active && b.box.visible && b.enabled() && (match.startsWith('/') ? new RegExp(match.slice(1, match.lastIndexOf('/')), match.slice(match.lastIndexOf('/') + 1)).test(b.label()) : b.label().includes(match)));
+        const b = list[nth];
+        if (!b) return false;
+        b.cb();
+        return true;
+      },
+    };
     hub.events.emit('ui-ready');
   }
 
@@ -133,7 +145,7 @@ export class UIScene extends Phaser.Scene implements UiApi {
   fade(out: boolean, ms = 300): Promise<void> {
     return new Promise((resolve) => { this.tweens.add({ targets: this.fadeRect, alpha: out ? 1 : 0, duration: ms, onComplete: () => resolve() }); });
   }
-  flash(ms = 400): void { this.flashRect.setAlpha(0.95); this.tweens.add({ targets: this.flashRect, alpha: 0, duration: ms }); }
+  flash(ms = 400): void { audio.rumble(); this.flashRect.setAlpha(0.95); this.tweens.add({ targets: this.flashRect, alpha: 0, duration: ms }); }
 
   async titleCard(t: string, ms = 2400): Promise<void> {
     const tx = text(this, GAME_W / 2, GAME_H / 2, t, 38, COL.gold, 820).setOrigin(0.5).setAlign('center').setDepth(DEPTH.ui + 120).setAlpha(0);
@@ -186,6 +198,7 @@ export class UIScene extends Phaser.Scene implements UiApi {
         t.timer = this.time.addEvent({ delay: 1000 / speed, repeat: ln.text.length, callback: () => {
           if (this.typing !== t) return;
           t.shown++;
+          if (t.shown % 3 === 0 && !ln.narr) audio.tick(0.9 + (ln.who.length % 5) * 0.06);
           this.dlgText.setText(ln.text.slice(0, t.shown));
           if (t.shown >= ln.text.length) { this.typing = null; this.dlgMore.setVisible(true); }
         } });

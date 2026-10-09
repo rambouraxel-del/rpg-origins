@@ -1,6 +1,7 @@
 // Petits éléments d'interface natifs (aucune image) : panneaux, boutons, textes.
 import Phaser from 'phaser';
 import { hub } from '../game';
+import { audio } from '../systems/Audio';
 
 export const FONT = 'Georgia, "Times New Roman", serif';
 export const COL = { panel: 0x0f1620, edge: 0xc9a45a, text: '#f4ecd8', dim: '#a9a28c', gold: '#ffd98a', good: '#9ae6a4', bad: '#ff9a8a', hl: 0x24344a, btn: 0x1c2a3c, btnHi: 0x2c4468 };
@@ -18,18 +19,24 @@ export function text(s: Phaser.Scene, x: number, y: number, str: string, size = 
   return s.add.text(x, y, str, { fontFamily: FONT, fontSize: fs(size), color, wordWrap: wrap ? { width: wrap } : undefined, lineSpacing: 4, ...o });
 }
 
+/** Registre des boutons affichés : sert aux tests de bout en bout (clic par libellé), jamais au jeu lui-même. */
+export interface RegBtn { label: () => string; cb: () => void; box: Phaser.GameObjects.Rectangle; enabled: () => boolean }
+export const BUTTONS = new Set<RegBtn>();
+
 export interface Btn { box: Phaser.GameObjects.Rectangle; label: Phaser.GameObjects.Text; destroy(): void; setEnabled(v: boolean): void; setLabel(t: string): void }
 
 export function button(s: Phaser.Scene, x: number, y: number, w: number, h: number, label: string, cb: () => void, size = 17): Btn {
   const box = s.add.rectangle(x, y, w, h, COL.btn).setOrigin(0, 0).setStrokeStyle(2, COL.edge, 0.8).setInteractive({ useHandCursor: true });
   const lab = text(s, x + w / 2, y + h / 2, label, size, COL.text, w - 12).setOrigin(0.5).setAlign('center');
   let enabled = true;
+  const reg: RegBtn = { label: () => lab.text, cb, box, enabled: () => enabled };
+  BUTTONS.add(reg);
   box.on('pointerover', () => enabled && box.setFillStyle(COL.btnHi));
   box.on('pointerout', () => box.setFillStyle(COL.btn));
-  box.on('pointerdown', () => { if (enabled) cb(); });
+  box.on('pointerdown', () => { if (enabled) { audio.start(); audio.click(); cb(); } });
   return {
     box, label: lab,
-    destroy() { box.destroy(); lab.destroy(); },
+    destroy() { BUTTONS.delete(reg); box.destroy(); lab.destroy(); },
     setEnabled(v: boolean) { enabled = v; lab.setAlpha(v ? 1 : 0.4); box.setAlpha(v ? 1 : 0.6); },
     setLabel(t: string) { lab.setText(t); },
   };

@@ -1,0 +1,20 @@
+# Construit le jeu et publie le résultat comme artefact de CI. Ne déploie RIEN (le site actuel n'est pas touché).
+name: Build RPG Origins (sans déploiement)
+on:
+  push:
+    branches: [claude/rpg-origins-complete]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run validate
+      - run: npm run test:images   # simulations : aucun appel payant
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with: { name: rpg-origins-dist, path: dist }

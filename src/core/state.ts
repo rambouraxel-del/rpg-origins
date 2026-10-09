@@ -2,6 +2,7 @@
 import { SAVE_VERSION, SCENARIO_VERSION } from '../config';
 import type { CompanionId, Cond, Effect, Json, QuestState } from './types';
 import { BALANCE } from '../data/balance';
+import { audio } from '../systems/Audio';
 
 export interface JournalEntry { id: string; title: string; text: string; tab: 'story' | 'people' | 'memory' }
 
@@ -109,9 +110,9 @@ export function applyEffects(s: GameState, effects: Effect[] | undefined, onceKe
 function applyOne(s: GameState, e: Effect): void {
   switch (e.op) {
     case 'flag': s.flags[e.key] = e.value === undefined ? true : e.value; break;
-    case 'power': if (!s.powers.includes(e.id)) s.powers.push(e.id); break;
+    case 'power': if (!s.powers.includes(e.id)) { s.powers.push(e.id); audio.chime(); } break;
     case 'accord': if (!s.accords.includes(e.id)) s.accords.push(e.id); break;
-    case 'item': if (!s.items.includes(e.id)) s.items.push(e.id); break;
+    case 'item': if (!s.items.includes(e.id)) { s.items.push(e.id); audio.chime(); } break;
     case 'removeItem': s.items = s.items.filter((i) => i !== e.id); break;
     case 'quest': {
       const cur = s.quests[e.id];

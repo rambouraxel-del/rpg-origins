@@ -10,6 +10,7 @@ import { SLOTS, SaveError, eraseSlot, exportSlot, importInto, saveOptions, slotI
 import { saveTo, loadFrom } from '../systems/Saves';
 import { applyEffects, evalCond } from '../core/state';
 import { bannerFor } from '../data/banter';
+import { audio } from '../systems/Audio';
 import type { CompanionId } from '../core/types';
 
 type Kind = 'pause' | 'journal' | 'inventory' | 'map' | 'saves' | 'options' | 'rest' | 'points';
@@ -254,9 +255,9 @@ export class Menus {
     const row = (i: number, label: string, val: () => string, dec: () => void, inc: () => void) => {
       const yy = y + 60 + i * 52;
       this.txt(x + 30, yy + 6, label, 17);
-      this.btn(x + 380, yy, 46, 36, '−', () => { dec(); saveOptions(o); this.rebuild(); });
+      this.btn(x + 380, yy, 46, 36, '−', () => { dec(); saveOptions(o); audio.applyVolumes(); this.rebuild(); });
       this.txt(x + 440, yy + 6, val(), 17, COL.gold);
-      this.btn(x + 560, yy, 46, 36, '+', () => { inc(); saveOptions(o); this.rebuild(); });
+      this.btn(x + 560, yy, 46, 36, '+', () => { inc(); saveOptions(o); audio.applyVolumes(); this.rebuild(); });
     };
     const pct = (v: number) => `${Math.round(v * 100)} %`;
     row(0, 'Musique', () => pct(o.music), () => { o.music = Math.max(0, +(o.music - 0.1).toFixed(2)); }, () => { o.music = Math.min(1, +(o.music + 0.1).toFixed(2)); });

@@ -22,6 +22,7 @@ const locs = new Map<string, LocationDef>(LOCATIONS.map((l) => [l.id, l]));
 const LOCATION_IDS = ['palace_garden', 'palace_hall', 'palace_portal', 'forest_arrival', 'forest_crossing', 'lisiere_square', 'lisiere_well', 'root_shrine', 'river_bank', 'river_relay', 'water_shrine', 'miral_gate', 'memory_garden', 'memory_shrine', 'stellar_dock', 'stellar_command', 'stellar_lab', 'chronal_chamber', 'occupied_archive', 'archive_core', 'valley_camp', 'valley_relay', 'valley_bridge', 'valley_outlook', 'core_approach', 'core_gate', 'planet_heart'];
 
 /** anchors/features requis par lieu : { anchors: Set, features: Set, any: Set (nom indifférent) } */
+const reachNeeds = new Map<string, Set<string>>();
 const need = new Map<string, { anchor: Set<string>; feature: Set<string>; any: Set<string>; spawns: Set<string> }>();
 const need_of = (id: string) => { let n = need.get(id); if (!n) { n = { anchor: new Set(), feature: new Set(), any: new Set(), spawns: new Set() }; need.set(id, n); } return n; };
 
@@ -38,7 +39,7 @@ const effectIds = (loc: string, e: Effect | undefined, ctx: string) => {
 function walkSteps(steps: Step[], loc: string, ctx: string, hot: Set<string>, onLoc: (l: string) => void, speakers: Set<string>): string {
   let cur = loc;
   const place = (p: Place | undefined, kind: 'anchor' | 'any') => { if (typeof p === 'string') need_of(cur)[kind].add(p); };
-  const area = (a: Area | undefined) => { if (typeof a === 'string') need_of(cur).any.add(a); };
+  const area = (a: Area | undefined) => { if (typeof a === 'string') { need_of(cur).any.add(a); (reachNeeds.get(cur) ?? reachNeeds.set(cur, new Set()).get(cur)!).add(a); } };
   const say = (lines: { who: string }[]) => { for (const l of lines) speakers.add(l.who); };
   steps.forEach((s, i) => {
     const c = `${ctx}#${i}`;
@@ -55,7 +56,7 @@ function walkSteps(steps: Step[], loc: string, ctx: string, hot: Set<string>, on
       case 'move': if (!LOCATION_IDS.includes(s.loc)) err(`${c}: lieu inconnu « ${s.loc} »`); need_of(s.loc).spawns.add(s.spawn); cur = s.loc; onLoc(cur); break;
       case 'set': s.effects.forEach((e) => effectIds(cur, e, c)); break;
       case 'if': { const a = walkSteps(s.then, cur, `${c}.then`, hot, onLoc, speakers); const b = walkSteps(s.otherwise ?? [], cur, `${c}.else`, hot, onLoc, speakers); cur = a === b ? a : cur; break; }
-      case 'gate': need_of(cur).feature.add(s.at); break;
+      case 'gate': need_of(cur).feature.add(s.at); (reachNeeds.get(cur) ?? reachNeeds.set(cur, new Set()).get(cur)!).add(s.at); break;
       default: break;
     }
   });
@@ -135,6 +136,43 @@ for (const l of LOCATIONS) {
   }
   for (const h of l.hotspots ?? []) if (h.at && !l.features[h.at]) err(`${l.id}: point d'intérêt ${h.id} : zone « ${h.at} » absente`);
 }
+// ------------------------------------------------------------ accessibilité réelle (grille 6 px depuis l'apparition par défaut)
+function reachable(l: LocationDef): { has: (x: number, y: number) => boolean; near: (r: { x: number; y: number; w: number; h: number }, d: number) => boolean; inside: (r: { x: number; y: number; w: number; h: number }) => boolean } {
+  const C = 6, W = Math.ceil(960 / C), H = Math.ceil(540 / C);
+  const ok = (x: number, y: number) => inWalk(l, x, y);
+  const seen = new Uint8Array(W * H);
+  const start = l.spawns.default ?? l.spawns[Object.keys(l.spawns)[0]];
+  const q: number[] = [Math.round(start.x / C) + Math.round(start.y / C) * W];
+  seen[q[0]] = 1;
+  while (q.length) {
+    const i = q.pop()!;
+    const cx = i % W, cy = (i / W) | 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = cx + dx, ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const j = nx + ny * W;
+      if (seen[j] || !ok(nx * C, ny * C)) continue;
+      seen[j] = 1; q.push(j);
+    }
+  }
+  const has = (x: number, y: number) => { const cx = Math.round(x / C), cy = Math.round(y / C); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const nx = cx + dx, ny = cy + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H && seen[nx + ny * W]) return true; } return false; };
+  const inside = (r: { x: number; y: number; w: number; h: number }) => { for (let y = r.y; y <= r.y + r.h; y += C) for (let x = r.x; x <= r.x + r.w; x += C) { const nx = Math.round(x / C), ny = Math.round(y / C); if (nx >= 0 && ny >= 0 && nx < W && ny < H && seen[nx + ny * W]) return true; } return false; };
+  const near = (r: { x: number; y: number; w: number; h: number }, d: number) => inside({ x: r.x - d, y: r.y - d, w: r.w + 2 * d, h: r.h + 2 * d });
+  return { has, near, inside };
+}
+for (const l of LOCATIONS) {
+  const R = reachable(l);
+  for (const [n, p] of Object.entries(l.spawns)) if (!R.has(p.x, p.y)) err(`${l.id}: apparition « ${n} » inaccessible depuis l'apparition par défaut`);
+  for (const [n, p] of Object.entries(l.anchors)) if (!R.has(p.x, p.y)) err(`${l.id}: ancre « ${n} » inaccessible`);
+  for (const e of l.exits) if (!R.inside(e.rect)) err(`${l.id}: sortie ${e.id} inaccessible`);
+  const rn = reachNeeds.get(l.id);
+  for (const [n, r] of Object.entries(l.features)) {
+    if (rn?.has(n)) { if (!R.inside(r) && !(l.anchors[n])) err(`${l.id}: zone d'objectif « ${n} » : aucune case accessible à l'intérieur`); }
+    else if (!R.near(r, 66)) err(`${l.id}: zone « ${n} » hors de portée d'interaction (aucune case accessible à moins de 66 px)`);
+  }
+  if (l.rest && !R.near(l.rest, 60)) err(`${l.id}: puits inaccessible`);
+}
+
 function inWalk(l: LocationDef, x: number, y: number): boolean {
   const inR = (r: { x: number; y: number; w: number; h: number }) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
   return l.walk.some(inR) && !(l.blocks ?? []).some(inR);

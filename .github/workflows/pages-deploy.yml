@@ -1,0 +1,30 @@
+# Déploiement GitHub Pages : MANUEL et explicitement confirmé. Il REMPLACERAIT le site publié actuellement.
+# À n'exécuter que sur autorisation expresse du propriétaire du dépôt.
+name: Déployer sur GitHub Pages (manuel, remplace le site actuel)
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Tapez REMPLACER LE SITE pour confirmer'
+        required: true
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency: { group: pages, cancel-in-progress: false }
+jobs:
+  deploy:
+    if: ${{ inputs.confirmation == 'REMPLACER LE SITE' }}
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: '${{ steps.deployment.outputs.page_url }}' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+      - id: deployment
+        uses: actions/deploy-pages@v4

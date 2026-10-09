@@ -11,7 +11,9 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 export class Director {
   activeScene: SceneDef | null = null;
   running = false;
-  private questRunning = false;
+  questRunning = false;
+  /** Étape en cours d'exécution (lecture seule, pour les tests et le journal de debug). */
+  curStep: Step | null = null;
   private runId = 0;
 
   constructor(private world: WorldScene) {}
@@ -183,6 +185,7 @@ export class Director {
   // ---------------------------------------------------------------- étapes
   async runStep(step: Step, once: string, sceneId: string): Promise<{ suspend?: { back: number; at: string; label: string; text: string } } | void> {
     const w = this.world, ui = hub.ui, s = hub.state;
+    this.curStep = step;
     switch (step.t) {
       case 'say': {
         await ui.say(step.lines);

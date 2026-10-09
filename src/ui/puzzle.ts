@@ -4,10 +4,12 @@ import { DEPTH, GAME_H, GAME_W } from '../config';
 import { hub } from '../game';
 import type { PuzzleDef } from '../core/types';
 import { COL, bar, button, panel, text } from './kit';
+import { audio } from '../systems/Audio';
 
 export function runPuzzle(s: Phaser.Scene, def: PuzzleDef): Promise<void> {
   return new Promise((resolve) => {
     hub.lock();
+    (hub as unknown as { puzzleDef: PuzzleDef | null }).puzzleDef = def;
     const D = DEPTH.ui + 40;
     const objs: ({ destroy(): void })[] = [];
     const add = <T extends { destroy(): void }>(o: T): T => { objs.push(o); return o; };
@@ -23,10 +25,10 @@ export function runPuzzle(s: Phaser.Scene, def: PuzzleDef): Promise<void> {
     const finish = () => {
       if (finished) return;
       finished = true;
-      setInfo(def.success, COL.good);
-      s.time.delayedCall(1300, () => { for (const o of objs) o.destroy(); hub.unlock(); resolve(); });
+      setInfo(def.success, COL.good); audio.success();
+      s.time.delayedCall(1300, () => { for (const o of objs) o.destroy(); (hub as unknown as { puzzleDef: PuzzleDef | null }).puzzleDef = null; hub.unlock(); resolve(); });
     };
-    const fail = () => setInfo(def.fail, COL.bad);
+    const fail = () => { setInfo(def.fail, COL.bad); audio.fail(); };
 
     const hintBtn = add(button(s, 120, 450, 190, 38, 'Aide (rappel)', () => {
       const labels = ['Rappel du but', 'Indication de la contrainte', 'Suggestion de la prochaine action'];

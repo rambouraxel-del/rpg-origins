@@ -7,6 +7,8 @@ import { WorldScene } from './scenes/WorldScene';
 import { UIScene } from './scenes/UIScene';
 import { registerContent } from './data';
 import { initSaves, loadFrom, freshGame } from './systems/Saves';
+import * as saveApi from './core/save';
+import { applyEffects } from './core/state';
 
 const params = new URLSearchParams(location.search);
 hub.devMode = params.has('dev');
@@ -28,6 +30,7 @@ const game = new Phaser.Game({
 /** Lance (ou relance) une partie dans les scènes World + UI. */
 async function enterGame(kind: 'new' | 'load'): Promise<void> {
   const sm = game.scene;
+  sm.stop('Title');
   game.canvas.focus();
   if (!sm.isActive('World')) { sm.start('World'); sm.start('UI'); }
   await new Promise<void>((resolve) => { const check = () => { if (hub.world && hub.ui) resolve(); else setTimeout(check, 30); }; check(); });
@@ -45,6 +48,7 @@ hub.events.on('title-choice', (mode: string) => {
     // menus accessibles depuis le titre : on démarre World/UI en arrière-plan sans lancer de partie
     freshGame();
     const sm = game.scene;
+    sm.stop('Title');
     if (!sm.isActive('World')) { sm.start('World'); sm.start('UI'); }
     const wait = () => { if (hub.world && hub.ui) { hub.ui.setHud(false); hub.ui.menus.toggle(mode === 'menu-saves' ? 'saves' : 'options'); } else setTimeout(wait, 30); };
     wait();
@@ -60,5 +64,7 @@ hub.events.on('return-title', () => {
   game.scene.start('Title');
 });
 
+(window as unknown as { __save: typeof saveApi; __fx: typeof applyEffects }).__save = saveApi;
+(window as unknown as { __fx: typeof applyEffects }).__fx = applyEffects;
 (window as unknown as { __hub: typeof hub; __game: Phaser.Game }).__hub = hub;
 (window as unknown as { __game: Phaser.Game }).__game = game;

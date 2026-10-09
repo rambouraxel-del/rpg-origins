@@ -7,6 +7,7 @@ import { Actor } from './Actor';
 import type { CompanionId, EnemySpawn, EnemyType, Pt } from '../core/types';
 import type { WorldScene } from '../scenes/WorldScene';
 import { POWERS } from '../data/powers';
+import { audio } from './Audio';
 
 interface Enemy {
   type: EnemyType;
@@ -69,6 +70,21 @@ export class Combat {
     w.input.mouse?.disableContextMenu();
   }
 
+  /** Pilote de test : approche l'adversaire le plus proche, esquive pendant une préparation, frappe. Utilise les vraies règles de dégâts. */
+  autoStep(dt: number): void {
+    if (!this.active || this.pausedByPlayer) return;
+    const p = this.w.player;
+    const alive = this.enemies.filter((e) => e.state !== 'down');
+    if (!alive.length) return;
+    const t = alive.sort((a, b) => Math.hypot(a.actor.x - p.x, a.actor.y - p.y) - Math.hypot(b.actor.x - p.x, b.actor.y - p.y))[0];
+    if (t.type === 'pompage' && t.shield && t.node) { p.setPos(t.node.x + 20, t.node.y); this.w.input.keyboard!.emit('keydown-E'); t.shield = false; }
+    const d = Math.hypot(t.actor.x - p.x, t.actor.y - p.y);
+    if (d > 48) { const m = this.w.tryMove(p.x, p.y, ((t.actor.x - p.x) / d) * 180 * dt, ((t.actor.y - p.y) / d) * 180 * dt); p.setPos(m.x, m.y); }
+    if (alive.some((e) => e.state === 'windup') && this.dodgeCd <= 0) this.dodge();
+    if (d < 58) this.strike(t.actor.x, t.actor.y - 26);
+    if (hub.state.hero.hp < hub.state.hero.maxHp * 0.4) this.useHeal();
+  }
+
   speedFactor(): number { return this.slowT > 0 ? 0.6 : 1; }
   isVeiled(): boolean { return this.veilT > 0; }
 
@@ -95,6 +111,7 @@ export class Combat {
     for (const e of this.enemies) e.actor.destroy();
     this.enemies = spawns.map((s) => this.makeEnemy(s));
     this.active = true;
+    audio.combat(true);
     this.pausedByPlayer = false;
     this.supportUsed = false;
     this.supportActive = null;
@@ -158,6 +175,7 @@ export class Combat {
     const f = s.difficulty === 'histoire' ? BALANCE.histoireDamageFactor : 1;
     s.hero.hp = Math.max(0, s.hero.hp - Math.round(n * f));
     this.invuln = 0.5;
+    audio.hurt();
     this.w.cameras.main.shake(120, 0.004);
     this.idleSince = 0;
     if (s.hero.hp <= 0) this.finish('lost');
@@ -167,6 +185,7 @@ export class Combat {
     const now = this.w.time.now / 1000;
     if (!this.active || now - this.lastStrike < BALANCE.hero.strikeInterval || this.dodgeT > 0) return;
     this.lastStrike = now;
+    audio.strike();
     const p = this.w.player;
     const dx = tx - p.x, dy = ty - (p.y - 30);
     const len = Math.hypot(dx, dy) || 1;
@@ -196,6 +215,7 @@ export class Combat {
     if (e.vuln > 0) d *= 1.5;
     if (e.state === 'recover') d *= 1.25;
     e.hp -= d;
+    audio.hit();
     e.actor.sprite.setTint(0xffaaaa);
     this.w.time.delayedCall(90, () => e.actor.sprite.clearTint());
     this.pop(e.actor.x, e.actor.y - 56, String(Math.round(d)), 0xffffff);
@@ -218,6 +238,7 @@ export class Combat {
     const f = this.faceVec();
     const move = this.moveVec();
     this.dodgeDir = move.x || move.y ? move : f;
+    audio.dodge();
     this.dodgeT = BALANCE.hero.dodgeTime;
     this.dodgeCd = BALANCE.hero.dodgeCooldown * (hub.state.hero.spent.dodge ? 0.9 : 1);
     this.invuln = Math.max(this.invuln, BALANCE.hero.dodgeTime + 0.08);
@@ -239,6 +260,7 @@ export class Combat {
     const s = hub.state;
     if (!this.active || hub.locked) return;
     if ((s.consumables.soin ?? 0) <= 0 || s.hero.hp >= s.hero.maxHp) { hub.ui.toast('Aucun soin utile.'); return; }
+    audio.heal();
     s.consumables.soin--;
     s.hero.hp = Math.min(s.hero.maxHp, s.hero.hp + BALANCE.hero.healItem);
     this.pop(this.w.player.x, this.w.player.y - 70, `+${BALANCE.hero.healItem}`, 0x8aff9a);
@@ -291,6 +313,7 @@ export class Combat {
       case 'bond': { this.bondT = 3 * (s.hero.spent.bond ? 1.2 : 1); this.ring(p.x, p.y, 0xffe08a); break; }
     }
     if (!used) return;
+    audio.power();
     s.hero.energy -= P.cost * (s.hero.spent.cost ? 0.9 : 1);
     this.cd[cdKey] = P.cooldown;
     this.idleSince = 0;
@@ -438,6 +461,7 @@ export class Combat {
 
   /** Arrêt brutal (chargement de partie) : aucune promesse n'est résolue. */
   abort(): void {
+    if (this.active) audio.combat(false);
     this.active = false; this.pausedByPlayer = false; this.resolveFn = undefined; this.queued = null;
     for (const e of this.enemies) e.actor.destroy();
     this.enemies = []; this.gfx.clear();
@@ -447,6 +471,7 @@ export class Combat {
   private finish(r: 'won' | 'lost'): void {
     if (!this.active) return;
     this.active = false;
+    audio.combat(false);
     this.pausedByPlayer = false;
     hub.ui.pauseOverlay(false);
     hub.ui.combatHud(null);

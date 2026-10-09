@@ -13,7 +13,7 @@ function chromePath() {
   return undefined;
 }
 
-export async function launch({ width = 960, height = 540, url = 'http://127.0.0.1:5173/?dev=1' } = {}) {
+export async function launch({ width = 960, height = 540, url = 'http://127.0.0.1:4173/?dev=1' } = {}) {
   const browser = await chromium.launch({ executablePath: chromePath(), args: ['--no-sandbox', '--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
   const page = await browser.newPage({ viewport: { width, height } });
   const logs = [];

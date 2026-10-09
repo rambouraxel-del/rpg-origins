@@ -20,7 +20,7 @@ export const VALLEY = [
   }),
   loc({
     id: 'valley_bridge', name: 'Pont d\'Orme', bg: 'assets/areas/valley_bridge.webp', mapPos: { x: 0.6, y: 0.72 },
-    walk: [R(170, 140, 670, 75), R(0, 60, 190, 150), R(830, 0, 130, 210), R(0, 200, 150, 130), R(50, 250, 100, 50), R(150, 300, 100, 50), R(250, 350, 120, 60), R(290, 330, 300, 170)],
+    walk: [R(170, 140, 670, 75), R(0, 60, 190, 150), R(830, 0, 130, 210), R(0, 200, 150, 130), R(40, 240, 120, 70), R(140, 290, 130, 70), R(240, 340, 140, 80), R(290, 330, 300, 170)],
     anchors: { start: P(500, 175), default: P(500, 175), ravel_spot: P(560, 172), auto1: P(500, 165), auto2: P(620, 190), arven_spot: P(700, 175), ilan_spot: P(200, 170), g1_from: P(100, 275), g2_from: P(120, 160), safe: P(400, 430), safe_b: P(480, 455) },
     spawns: { ravel_arrive: { x: 300, y: 175 } },
     features: { appui_pont: R(60, 380, 150, 140), famille_zone: R(420, 400, 120, 70) },

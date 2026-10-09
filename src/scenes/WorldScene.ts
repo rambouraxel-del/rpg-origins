@@ -10,6 +10,7 @@ import { Director } from '../systems/Director';
 import { Combat } from '../systems/Combat';
 import { Stealth } from '../systems/Stealth';
 import { bannerFor } from '../data/banter';
+import { audio } from '../systems/Audio';
 
 export const inRect = (r: Rect, x: number, y: number) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 
@@ -85,6 +86,7 @@ export class WorldScene extends Phaser.Scene {
     for (let i = 0; i < 80; i++) this.history.push({ x: sp.x, y: sp.y });
     this.syncFollowers(true);
     hub.state.location.x = sp.x; hub.state.location.y = sp.y;
+    audio.forLocation(def.id);
     hub.events.emit('location', def);
   }
 
@@ -328,7 +330,7 @@ export class WorldScene extends Phaser.Scene {
   private updateTarget(): void {
     let best: Target | null = null;
     const px = this.player.x, py = this.player.y;
-    const consider = (t: Target) => { if (t.dist <= INTERACT_RADIUS * 1.25 && (!best || t.dist < best.dist)) best = t; };
+    const consider = (t: Target) => { const d = t.dist + (t.kind === 'hotspot' && hub.state.seenHotspots[t.id] ? 30 : 0); if (t.dist <= INTERACT_RADIUS * 1.25 && (!best || d < best.dist)) best = { ...t, dist: d }; };
     for (const [id, a] of this.npcs) {
       if (!this.talkHandlers.has(id)) continue;
       consider({ kind: 'actor', id, x: a.x, y: a.y, label: `${a.verb ?? 'Parler à'} ${a.title ?? nameOf(id)}`.replace(/^Guider (.*)$/, 'Guider : $1'), dist: Math.hypot(a.x - px, a.y - py) });
@@ -360,9 +362,10 @@ export class WorldScene extends Phaser.Scene {
     const t = this.target;
     if (!t || hub.locked || this.cinematic || this.transitioning || this.combat.active) return;
     hub.lock();
+    audio.interact();
     try {
       if (t.kind === 'actor') { const fn = this.talkHandlers.get(t.id); this.setTarget(null); if (fn) await fn(); }
-      else if (t.kind === 'follower') await this.banter(t.id as CompanionId);
+      else if (t.kind === 'follower') { const fn = this.talkHandlers.get(t.id); this.setTarget(null); if (fn) await fn(); else await this.banter(t.id as CompanionId); }
       else if (t.kind === 'rest') await hub.ui.restMenu();
       else if (t.kind === 'hotspot') await this.examine(t.id);
     } finally { hub.unlock(); }
@@ -414,6 +417,7 @@ export class WorldScene extends Phaser.Scene {
   async travel(locId: string, spawn?: string | Pt, face?: Facing): Promise<void> {
     if (this.transitioning) return;
     this.transitioning = true;
+    audio.whoosh();
     hub.ui.prompt(null);
     await hub.ui.fade(true, 260);
     await this.loadLocation(locId, spawn, face);

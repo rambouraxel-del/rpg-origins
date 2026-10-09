@@ -5,9 +5,9 @@ export const STELLAR = [
   loc({
     id: 'stellar_dock', name: 'Quai de la station', bg: 'assets/areas/stellar_dock.webp', mapPos: { x: 0.7, y: 0.18 },
     walk: [R(60, 170, 860, 310), R(640, 20, 60, 160), R(20, 120, 130, 130), R(850, 100, 100, 100)],
-    blocks: [R(100, 190, 260, 110), R(30, 300, 230, 170), R(270, 360, 170, 120), R(730, 300, 230, 140), R(570, 110, 70, 150), R(695, 175, 80, 150), R(410, 100, 170, 100), R(770, 150, 80, 70)],
+    blocks: [R(100, 190, 260, 110), R(30, 300, 230, 170), R(270, 360, 170, 120), R(740, 325, 220, 115), R(570, 110, 70, 150), R(695, 175, 75, 100), R(410, 100, 170, 100), R(770, 150, 80, 70)],
     anchors: { start: P(500, 400), default: P(500, 400), ravel_spot: P(560, 295), famille1: P(300, 335), famille2: P(380, 300), refugiee_spot: P(490, 430) },
-    features: { famille1_zone: R(100, 190, 260, 110), collegues: R(400, 220, 150, 120), soins: R(30, 300, 230, 170), colis: R(730, 300, 230, 140), atelier_zone: R(270, 360, 170, 120) },
+    features: { famille1_zone: R(100, 190, 260, 110), collegues: R(400, 220, 150, 120), soins: R(30, 300, 230, 170), colis: R(740, 325, 220, 115), atelier_zone: R(270, 360, 170, 120) },
     exits: [{ side: 'up', at: 665, to: 'miral_gate' }, { side: 'right', at: 150, to: 'stellar_command' }, { side: 'left', at: 190, to: 'occupied_archive' }],
   }),
   loc({

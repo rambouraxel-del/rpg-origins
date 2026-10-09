@@ -24,5 +24,7 @@ export function loc(s: LocSpec): LocationDef {
     spawns[`from_${e.to}`] = { ...pos, face: FACE[e.side] };
     return { id: `${s.id}>${e.to}`, rect, to: e.to, spawn: e.spawn ?? `from_${s.id}`, label: e.label, cond: e.cond, lockedText: e.lockedText };
   });
-  return { id: s.id, name: s.name, bg: s.bg, walk: s.walk, blocks: s.blocks, occluders: s.occluders, spawns, anchors: s.anchors, features: s.features, exits, hotspots: s.hotspots, rest: s.rest, mapPos: s.mapPos };
+  // Couloirs de sortie : la zone de marche est prolongée jusqu'au bord de l'écran, devant chaque sortie dessinée.
+  const corridors: Rect[] = s.exits.map((e) => (e.side === 'left' ? { x: 0, y: e.at - 55, w: 80, h: 110 } : e.side === 'right' ? { x: 880, y: e.at - 55, w: 80, h: 110 } : e.side === 'up' ? { x: e.at - 60, y: 110, w: 120, h: 90 } : { x: e.at - 60, y: 450, w: 120, h: 90 }));
+  return { id: s.id, name: s.name, bg: s.bg, walk: [...s.walk, ...corridors], blocks: s.blocks, occluders: s.occluders, spawns, anchors: s.anchors, features: s.features, exits, hotspots: s.hotspots, rest: s.rest, mapPos: s.mapPos };
 }
